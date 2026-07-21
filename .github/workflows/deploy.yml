@@ -1,0 +1,66 @@
+name: Deploy su GitHub Pages
+
+# Ad ogni push sul branch principale: build e pubblicazione automatica.
+# I soci vedranno l'avviso "Nuova versione disponibile" all'apertura successiva.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # permette il lancio manuale dalla tab Actions
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Un solo deploy alla volta; non annulla quello in corso.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # Calcola il base path: "/" per un sito utente (<user>.github.io),
+      # altrimenti "/<nome-repo>/" per un repo progetto.
+      - name: Calcola base path
+        id: base
+        run: |
+          REPO="${{ github.event.repository.name }}"
+          if [[ "$REPO" == *.github.io ]]; then
+            echo "value=/" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=/$REPO/" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build
+        env:
+          VITE_BASE: ${{ steps.base.outputs.value }}
+          # Credenziali Google Drive (opzionali): impostale nei Secrets del repo
+          # Settings → Secrets and variables → Actions, se vuoi l'import da Drive.
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_GOOGLE_API_KEY: ${{ secrets.VITE_GOOGLE_API_KEY }}
+        run: npm run build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

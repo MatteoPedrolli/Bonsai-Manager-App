@@ -1,0 +1,15 @@
+node_modules/
+dist/
+dist-ssr/
+*.local
+.DS_Store
+.vite/
+*.log
+
+# Credenziali locali (Google Drive) — mai su GitHub. Resta tracciato solo .env.example
+.env
+.env.*
+!.env.example
+
+# Impostazioni locali di Claude Code (personali per dispositivo)
+.claude/settings.local.json
