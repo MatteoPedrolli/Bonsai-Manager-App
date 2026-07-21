@@ -1,5 +1,6 @@
 // Genera le icone PWA (icon-192.png, icon-512.png) senza dipendenze esterne.
-// Disegna l'icona "hanko" a mano su un buffer RGBA e la codifica in PNG con zlib.
+// Disegna un bonsai (vaso + tronco + chioma + sigillo hanko) su un buffer RGBA
+// in super-risoluzione (4×) e poi lo riduce mediando i pixel → bordi morbidi.
 import { deflateSync } from "node:zlib";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -8,12 +9,14 @@ import { dirname, join } from "node:path";
 const OUT = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 mkdirSync(OUT, { recursive: true });
 
-const INK = [0x1c, 0x1b, 0x19];
 const PAPER = [0xe6, 0xe2, 0xd6];
 const SEAL = [0xb2, 0x3a, 0x2f];
 const MOSS = [0x4a, 0x5d, 0x45];
+const MOSS_LIGHT = [0x5b, 0x72, 0x56];
 const BARK = [0x8c, 0x7b, 0x65];
+const BARK_DARK = [0x6e, 0x5e, 0x49];
 
+// ---- PNG encoder (RGBA, filtro none) ----
 function crc32(buf) {
   let c = ~0;
   for (let i = 0; i < buf.length; i++) {
@@ -22,94 +25,114 @@ function crc32(buf) {
   }
   return ~c >>> 0;
 }
-
 function chunk(type, data) {
   const len = Buffer.alloc(4);
   len.writeUInt32BE(data.length, 0);
-  const typeBuf = Buffer.from(type, "ascii");
-  const body = Buffer.concat([typeBuf, data]);
+  const body = Buffer.concat([Buffer.from(type, "ascii"), data]);
   const crc = Buffer.alloc(4);
   crc.writeUInt32BE(crc32(body), 0);
   return Buffer.concat([len, body, crc]);
 }
-
-function encodePNG(size, pixels) {
-  // pixels: Uint8Array RGBA length size*size*4
+function encodePNG(size, px) {
   const sig = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(size, 0);
   ihdr.writeUInt32BE(size, 4);
-  ihdr[8] = 8; // bit depth
-  ihdr[9] = 6; // color type RGBA
+  ihdr[8] = 8;
+  ihdr[9] = 6;
   const raw = Buffer.alloc(size * (size * 4 + 1));
   for (let y = 0; y < size; y++) {
-    raw[y * (size * 4 + 1)] = 0; // filter none
-    pixels.copy
-      ? pixels.copy(raw, y * (size * 4 + 1) + 1, y * size * 4, y * size * 4 + size * 4)
-      : Buffer.from(pixels.subarray(y * size * 4, y * size * 4 + size * 4)).copy(
-          raw,
-          y * (size * 4 + 1) + 1
-        );
+    raw[y * (size * 4 + 1)] = 0;
+    px.copy(raw, y * (size * 4 + 1) + 1, y * size * 4, y * size * 4 + size * 4);
   }
   const idat = deflateSync(raw, { level: 9 });
-  return Buffer.concat([
-    sig,
-    chunk("IHDR", ihdr),
-    chunk("IDAT", idat),
-    chunk("IEND", Buffer.alloc(0)),
-  ]);
+  return Buffer.concat([sig, chunk("IHDR", ihdr), chunk("IDAT", idat), chunk("IEND", Buffer.alloc(0))]);
 }
 
-function draw(size) {
-  const px = Buffer.alloc(size * size * 4);
-  const s = size;
-  const cx = s / 2;
-  const cy = s * 0.46;
-  const radius = s * 0.9 * 0.5; // rounded square radius region
-  const corner = s * 0.18;
-  const ringR = s * 0.26;
-  const ringW = s * 0.05;
-  const set = (x, y, [r, g, b], a = 255) => {
-    const i = (y * s + x) * 4;
-    px[i] = r;
-    px[i + 1] = g;
-    px[i + 2] = b;
-    px[i + 3] = a;
+// ---- disegno in coordinate normalizzate 0..1 ----
+function distToSegment(px, py, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay;
+  const len2 = dx * dx + dy * dy || 1e-9;
+  let t = ((px - ax) * dx + (py - ay) * dy) / len2;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+}
+
+function renderSupersampled(size, ss) {
+  const S = size * ss;
+  const px = Buffer.alloc(S * S * 4);
+  const set = (x, y, [r, g, b]) => {
+    const i = (y * S + x) * 4;
+    px[i] = r; px[i + 1] = g; px[i + 2] = b; px[i + 3] = 255;
   };
-  const inRounded = (x, y) => {
-    // rounded square covering full canvas with corner radius
-    const rx = Math.min(x, s - 1 - x);
-    const ry = Math.min(y, s - 1 - y);
-    if (rx >= corner || ry >= corner) return true;
-    const dx = corner - rx;
-    const dy = corner - ry;
-    return dx * dx + dy * dy <= corner * corner;
-  };
-  for (let y = 0; y < s; y++) {
-    for (let x = 0; x < s; x++) {
-      if (!inRounded(x, y)) {
-        set(x, y, [0, 0, 0], 0);
-        continue;
+  const circle = (cx, cy, r, col) => ({ test: (u, v) => Math.hypot(u - cx, v - cy) <= r, col });
+  const canopy = [
+    circle(0.34, 0.40, 0.150, MOSS),
+    circle(0.63, 0.40, 0.140, MOSS),
+    circle(0.50, 0.31, 0.175, MOSS),
+    circle(0.48, 0.46, 0.150, MOSS),
+    circle(0.42, 0.34, 0.100, MOSS_LIGHT),
+  ];
+
+  for (let y = 0; y < S; y++) {
+    const v = y / S;
+    for (let x = 0; x < S; x++) {
+      const u = x / S;
+
+      // sfondo carta washi
+      let col = PAPER;
+
+      // sigillo hanko (sole) dietro l'albero
+      if (Math.hypot(u - 0.66, v - 0.30) <= 0.12) col = SEAL;
+
+      // tronco (due segmenti con leggera curva)
+      const wTrunk = 0.024;
+      if (
+        distToSegment(u, v, 0.50, 0.70, 0.485, 0.58) <= wTrunk ||
+        distToSegment(u, v, 0.485, 0.58, 0.46, 0.47) <= wTrunk * 0.85
+      ) col = BARK_DARK;
+
+      // chioma
+      for (const c of canopy) if (c.test(u, v)) col = c.col;
+
+      // vaso (trapezio) davanti alla base del tronco
+      if (v >= 0.705 && v <= 0.80) {
+        const tt = (v - 0.705) / (0.80 - 0.705); // 0 in alto, 1 in basso
+        const halfTop = 0.185, halfBot = 0.135;
+        const half = halfTop + (halfBot - halfTop) * tt;
+        if (Math.abs(u - 0.5) <= half) {
+          col = v <= 0.735 ? BARK_DARK : BARK; // bordo superiore più scuro
+        }
       }
-      set(x, y, INK);
-      const d = Math.hypot(x - cx, y - cy);
-      // anello rosso (hanko)
-      if (Math.abs(d - ringR) <= ringW) set(x, y, SEAL);
-      // foglia verde centrale
-      const lx = x - cx;
-      const ly = y - cy;
-      if (ly < 0 && Math.abs(lx) < (s * 0.11) * (1 + ly / (s * 0.22))) {
-        set(x, y, MOSS);
-      }
-      // tronco
-      if (Math.abs(x - cx) < s * 0.02 && y > cy && y < cy + s * 0.16) set(x, y, BARK);
+
+      set(x, y, col);
     }
   }
-  return px;
+
+  // downsample mediando ss×ss
+  const out = Buffer.alloc(size * size * 4);
+  const n = ss * ss;
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      let r = 0, g = 0, b = 0;
+      for (let dy = 0; dy < ss; dy++) {
+        for (let dx = 0; dx < ss; dx++) {
+          const i = ((y * ss + dy) * S + (x * ss + dx)) * 4;
+          r += px[i]; g += px[i + 1]; b += px[i + 2];
+        }
+      }
+      const o = (y * size + x) * 4;
+      out[o] = Math.round(r / n);
+      out[o + 1] = Math.round(g / n);
+      out[o + 2] = Math.round(b / n);
+      out[o + 3] = 255;
+    }
+  }
+  return out;
 }
 
 for (const size of [192, 512]) {
-  const png = encodePNG(size, draw(size));
+  const png = encodePNG(size, renderSupersampled(size, 4));
   writeFileSync(join(OUT, `icon-${size}.png`), png);
   console.log(`icon-${size}.png (${png.length} bytes)`);
 }

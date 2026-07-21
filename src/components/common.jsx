@@ -1,4 +1,4 @@
-import { ArrowLeft, Home as HomeIcon, CalendarClock, Settings } from "lucide-react";
+import { ArrowLeft, Home as HomeIcon, CalendarClock, Settings, Plus } from "lucide-react";
 import { INK, PAPER, SEAL, BARK, MOSS, FONT_DISPLAY, FONT_BODY, fmtDate } from "../lib/constants.js";
 
 // Sigillo "hanko": piccolo cerchio colorato di stato (spec §3)
@@ -39,11 +39,14 @@ export function TopBar({ title, onBack, right }) {
   );
 }
 
-export function TabBar({ active, onSelect, badges = {} }) {
-  const tabs = [
-    { key: "home", label: "Collezione", icon: HomeIcon },
-    { key: "plan", label: "Pianificazione", icon: CalendarClock },
-    { key: "opzioni", label: "Opzioni", icon: Settings },
+export function TabBar({ active, onSelect, onNewIntervento, badges = {} }) {
+  // Tra Collezione e Pianificazione c'è l'azione "Intervento" (non è una vista:
+  // apre la registrazione di un nuovo intervento).
+  const items = [
+    { type: "tab", key: "home", label: "Collezione", icon: HomeIcon },
+    { type: "action", key: "intervento", label: "Intervento", icon: Plus },
+    { type: "tab", key: "plan", label: "Pianificazione", icon: CalendarClock },
+    { type: "tab", key: "opzioni", label: "Opzioni", icon: Settings },
   ];
   return (
     <div
@@ -54,31 +57,52 @@ export function TabBar({ active, onSelect, badges = {} }) {
         paddingBottom: "env(safe-area-inset-bottom)",
       }}
     >
-      {tabs.map(({ key, label, icon: Icon }) => (
-        <button
-          key={key}
-          onClick={() => onSelect(key)}
-          className="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 relative"
-          style={{ color: active === key ? SEAL : PAPER, opacity: active === key ? 1 : 0.75 }}
-        >
-          <span className="relative">
-            <Icon size={18} />
-            {badges[key] > 0 && (
+      {items.map((item) => {
+        const Icon = item.icon;
+        if (item.type === "action") {
+          return (
+            <button
+              key={item.key}
+              onClick={() => onNewIntervento?.()}
+              className="flex-1 flex flex-col items-center justify-center gap-1 py-2"
+              aria-label="Nuovo intervento"
+            >
               <span
-                className="absolute flex items-center justify-center"
-                style={{
-                  top: -6, right: -10, minWidth: 15, height: 15, padding: "0 3px",
-                  borderRadius: 8, background: SEAL, color: PAPER,
-                  fontFamily: FONT_BODY, fontSize: 9.5, fontWeight: 600,
-                }}
+                className="flex items-center justify-center"
+                style={{ width: 34, height: 34, borderRadius: "50%", background: SEAL, color: PAPER }}
               >
-                {badges[key]}
+                <Icon size={20} />
               </span>
-            )}
-          </span>
-          <span style={{ fontFamily: FONT_BODY, fontSize: 10.5 }}>{label}</span>
-        </button>
-      ))}
+              <span style={{ fontFamily: FONT_BODY, fontSize: 10.5, color: PAPER }}>{item.label}</span>
+            </button>
+          );
+        }
+        return (
+          <button
+            key={item.key}
+            onClick={() => onSelect(item.key)}
+            className="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 relative"
+            style={{ color: active === item.key ? SEAL : PAPER, opacity: active === item.key ? 1 : 0.75 }}
+          >
+            <span className="relative">
+              <Icon size={18} />
+              {badges[item.key] > 0 && (
+                <span
+                  className="absolute flex items-center justify-center"
+                  style={{
+                    top: -6, right: -10, minWidth: 15, height: 15, padding: "0 3px",
+                    borderRadius: 8, background: SEAL, color: PAPER,
+                    fontFamily: FONT_BODY, fontSize: 9.5, fontWeight: 600,
+                  }}
+                >
+                  {badges[item.key]}
+                </span>
+              )}
+            </span>
+            <span style={{ fontFamily: FONT_BODY, fontSize: 10.5 }}>{item.label}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }

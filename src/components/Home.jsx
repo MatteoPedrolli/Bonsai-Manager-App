@@ -85,7 +85,7 @@ function FilterChips({ active, onSelect, statoOptions }) {
   );
 }
 
-export default function Home({ plants, planned, onOpen, onNew, onNewIntervento, statoOptions, onGoTo, backupStale }) {
+export default function Home({ plants, planned, onOpen, onNew, statoOptions, onGoTo, backupStale }) {
   const [filter, setFilter] = useState("Tutte");
   const visible =
     filter === "Tutte" ? plants : (plants || []).filter((p) => (p.tags?.stato || []).includes(filter));
@@ -117,17 +117,10 @@ export default function Home({ plants, planned, onOpen, onNew, onNewIntervento, 
         )}
       </div>
 
-      <div className="flex gap-2 px-4 pb-3">
-        <button
-          onClick={onNewIntervento}
-          className="flex-1 py-2 flex items-center justify-center gap-2"
-          style={{ background: "transparent", border: `1px solid ${INK}`, borderRadius: 4, fontFamily: FONT_BODY, fontSize: 12.5, color: INK }}
-        >
-          Nuovo intervento
-        </button>
+      <div className="px-4 pb-3">
         <button
           onClick={onNew}
-          className="flex-1 py-2 flex items-center justify-center gap-2"
+          className="w-full py-2.5 flex items-center justify-center gap-2"
           style={{ background: INK, borderRadius: 4, fontFamily: FONT_BODY, fontSize: 12.5, color: PAPER }}
         >
           <Plus size={15} /> Nuova scheda

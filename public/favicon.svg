@@ -1,6 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="12" fill="#1C1B19" />
-  <circle cx="32" cy="30" r="13" fill="none" stroke="#B23A2F" stroke-width="3.5" />
-  <path d="M32 30 C 26 22, 26 16, 32 12 C 38 16, 38 22, 32 30 Z" fill="#4A5D45" />
-  <rect x="30.6" y="30" width="2.8" height="16" fill="#8C7B65" />
+  <rect width="64" height="64" rx="12" fill="#E6E2D6"/>
+  <circle cx="42" cy="19" r="7.5" fill="#B23A2F"/>
+  <!-- tronco -->
+  <path d="M32 45 C 31 38, 30.5 34, 29.5 30" stroke="#6E5E49" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <!-- chioma -->
+  <g fill="#4A5D45">
+    <circle cx="22" cy="26" r="9.5"/>
+    <circle cx="40" cy="26" r="9"/>
+    <circle cx="32" cy="20" r="11"/>
+    <circle cx="31" cy="29" r="9.5"/>
+  </g>
+  <circle cx="27" cy="22" r="6" fill="#5B7256"/>
+  <!-- vaso -->
+  <path d="M20 45 L44 45 L40 52 L24 52 Z" fill="#8C7B65"/>
+  <rect x="20" y="45" width="24" height="2.4" fill="#6E5E49"/>
 </svg>

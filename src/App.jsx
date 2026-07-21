@@ -116,7 +116,6 @@ export default function App() {
           planned={planned}
           onOpen={openPlant}
           onNew={() => setShowNewPlant(true)}
-          onNewIntervento={() => setShowNewIntervento(true)}
           statoOptions={statoOptions}
           onGoTo={setView}
           backupStale={backupStale}
@@ -159,7 +158,12 @@ export default function App() {
       )}
 
       {view !== "detail" && (
-        <TabBar active={activeTab} onSelect={setView} badges={{ plan: due.due }} />
+        <TabBar
+          active={activeTab}
+          onSelect={setView}
+          onNewIntervento={() => setShowNewIntervento(true)}
+          badges={{ plan: due.due }}
+        />
       )}
 
       {showNewPlant && (

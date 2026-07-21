@@ -19,6 +19,11 @@ export default defineConfig({
     VitePWA({
       registerType: "prompt",
       includeAssets: ["favicon.svg"],
+      // La libreria HEIC (~1.3 MB) è caricata solo su richiesta: la escludiamo
+      // dalla precache così l'installazione dell'app resta leggera.
+      workbox: {
+        globIgnores: ["**/heic2any-*.js"],
+      },
       manifest: {
         name: "Bonsai Manager",
         short_name: "Bonsai Manager",

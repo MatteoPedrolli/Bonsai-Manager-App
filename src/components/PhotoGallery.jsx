@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Camera, Images, Cloud, ImageIcon, Plus, X, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { Camera, Images, Cloud, ImageIcon, Plus, X, ChevronLeft, ChevronRight, Trash2, Pencil } from "lucide-react";
 import { db } from "../lib/db.js";
-import { addPhotos, deletePhoto } from "../lib/photos.js";
+import { addPhotos, deletePhoto, updatePhotoCaption } from "../lib/photos.js";
 import { pickFromDrive, isDriveConfigured } from "../lib/googleDrive.js";
 import { INK, PAPER, PAPER_DEEP, BARK, SEAL, FONT_DISPLAY, FONT_BODY, fmtDate } from "../lib/constants.js";
 
@@ -71,15 +71,23 @@ export function PhotoStrip({ plantId, onNotify }) {
     }
   };
 
+  // Eliminazione rapida dalla miniatura (coerente per foto da fotocamera,
+  // galleria o Drive; funziona anche se la foto non si carica).
+  const handleThumbDelete = async (e, id) => {
+    e.stopPropagation();
+    await deletePhoto(id);
+    onNotify?.("Foto eliminata");
+  };
+
   return (
     <>
       <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
         {photos.map((photo, idx) => (
-          <button
+          <div
             key={photo.id}
             onClick={() => setLightboxIndex(idx)}
-            className="flex-shrink-0 overflow-hidden"
-            style={{ width: 88, height: 88, borderRadius: 4, background: "#CFC9B8", border: `1px solid ${BARK}44`, padding: 0 }}
+            className="flex-shrink-0 overflow-hidden relative"
+            style={{ width: 88, height: 88, borderRadius: 4, background: "#CFC9B8", border: `1px solid ${BARK}44`, cursor: "pointer" }}
           >
             {urls[photo.id] ? (
               <img
@@ -88,11 +96,25 @@ export function PhotoStrip({ plantId, onNotify }) {
                 style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
               />
             ) : (
-              <span className="flex items-center justify-center w-full h-full" style={{ color: BARK }}>
-                <ImageIcon size={20} />
+              <span className="flex flex-col items-center justify-center w-full h-full gap-1" style={{ color: BARK }}>
+                <ImageIcon size={18} />
+                <span style={{ fontFamily: FONT_BODY, fontSize: 8.5, textAlign: "center", lineHeight: 1.1 }}>
+                  non caricata
+                </span>
               </span>
             )}
-          </button>
+            <button
+              onClick={(e) => handleThumbDelete(e, photo.id)}
+              aria-label="Elimina foto"
+              className="absolute flex items-center justify-center"
+              style={{
+                top: 3, right: 3, width: 22, height: 22, borderRadius: "50%",
+                background: "rgba(28,27,25,.62)", color: PAPER, border: "none",
+              }}
+            >
+              <Trash2 size={12} />
+            </button>
+          </div>
         ))}
 
         <button
@@ -107,7 +129,7 @@ export function PhotoStrip({ plantId, onNotify }) {
 
         {/* input nascosti: fotocamera (capture) e galleria */}
         <input ref={cameraRef} type="file" accept="image/*" capture="environment" onChange={handleInput} style={{ display: "none" }} />
-        <input ref={galleryRef} type="file" accept="image/*" multiple onChange={handleInput} style={{ display: "none" }} />
+        <input ref={galleryRef} type="file" accept="image/*,.heic,.heif" multiple onChange={handleInput} style={{ display: "none" }} />
       </div>
 
       {sheet && (
@@ -190,6 +212,18 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify }) {
   const count = photos.length;
   const current = photos[index];
 
+  // Bozza didascalia, sincronizzata al cambio foto; salvata al blur.
+  const [caption, setCaption] = useState(current?.caption || "");
+  useEffect(() => {
+    setCaption(current?.caption || "");
+  }, [current?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const saveCaption = () => {
+    if (current && caption !== (current.caption || "")) {
+      updatePhotoCaption(current.id, caption.trim());
+    }
+  };
+
   const go = useCallback(
     (dir) => {
       setConfirmDel(false);
@@ -207,6 +241,11 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify }) {
   // Tastiera + blocco scroll di fondo
   useEffect(() => {
     const onKey = (e) => {
+      // Se si sta scrivendo la didascalia, non intercettare le frecce.
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") {
+        if (e.key === "Escape") e.target.blur();
+        return;
+      }
       if (e.key === "Escape") onClose();
       else if (e.key === "ArrowLeft") go(-1);
       else if (e.key === "ArrowRight") go(1);
@@ -287,20 +326,32 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify }) {
         )}
       </div>
 
-      {/* Barra inferiore: data/didascalia + elimina */}
-      <div className="px-4 py-4 flex items-center justify-between gap-3" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 14px)" }}>
-        <div className="min-w-0">
+      {/* Barra inferiore: didascalia editabile + data + elimina */}
+      <div className="px-4 py-3" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 14px)" }}>
+        {/* Didascalia */}
+        <div
+          className="flex items-center gap-2 mb-3 px-3 py-2"
+          style={{ background: "rgba(255,255,255,.08)", borderRadius: 8 }}
+        >
+          <Pencil size={14} color={PAPER} style={{ opacity: 0.6, flexShrink: 0 }} />
+          <input
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            onBlur={saveCaption}
+            onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+            placeholder="Aggiungi una didascalia…"
+            maxLength={140}
+            className="flex-1 min-w-0"
+            style={{ background: "transparent", border: "none", outline: "none", color: PAPER, fontFamily: FONT_BODY, fontSize: 13.5 }}
+          />
+        </div>
+
+        <div className="flex items-center justify-between gap-3">
           <div style={{ fontFamily: FONT_BODY, fontSize: 12, color: PAPER, opacity: 0.7 }}>
             {fmtDate(current.createdAt)}
           </div>
-          {current.caption && (
-            <div className="truncate" style={{ fontFamily: FONT_BODY, fontSize: 13, color: PAPER }}>
-              {current.caption}
-            </div>
-          )}
-        </div>
 
-        {!confirmDel ? (
+          {!confirmDel ? (
           <button
             onClick={() => setConfirmDel(true)}
             className="flex items-center gap-2 px-3 py-2 flex-shrink-0"
@@ -326,6 +377,7 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify }) {
             </button>
           </div>
         )}
+        </div>
       </div>
     </div>,
     document.body
