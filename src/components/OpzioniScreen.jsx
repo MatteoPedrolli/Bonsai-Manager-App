@@ -39,7 +39,7 @@ export default function OpzioniScreen({
 
   return (
     <div style={{ background: PAPER, minHeight: "100dvh" }}>
-      <TopBar title="STAB · Opzioni" />
+      <TopBar title="Opzioni" />
       <div className="px-4 pt-4 pb-28">
 
         {/* --- Statistiche --- */}

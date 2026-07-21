@@ -97,12 +97,9 @@ export default function Home({ plants, planned, onOpen, onNew, onNewIntervento, 
 
   return (
     <div style={{ background: PAPER, minHeight: "100dvh" }}>
-      <TopBar title="STAB · Collezione" />
-      <div className="pt-3">
-        <FilterChips active={filter} onSelect={setFilter} statoOptions={statoOptions} />
-      </div>
+      <TopBar title="Bonsai Manager" />
 
-      <div className="px-4">
+      <div className="px-4 pt-3">
         {due.due > 0 && (
           <Banner
             tone={due.overdue > 0 ? "warn" : "info"}
@@ -137,7 +134,7 @@ export default function Home({ plants, planned, onOpen, onNew, onNewIntervento, 
         </button>
       </div>
 
-      <div className="px-4 pb-28">
+      <div className="px-4" style={{ paddingBottom: 130 }}>
         {plants === undefined ? (
           <div style={{ fontFamily: FONT_BODY, color: BARK, fontSize: 13, padding: 20, textAlign: "center" }}>
             Carico…
@@ -154,6 +151,21 @@ export default function Home({ plants, planned, onOpen, onNew, onNewIntervento, 
             )}
           </>
         )}
+      </div>
+
+      {/* Selettore filtro per stato: barra fissa in fondo, sopra la tab bar */}
+      <div
+        className="fixed left-1/2 w-full z-20 pt-2"
+        style={{
+          maxWidth: 480,
+          transform: "translateX(-50%)",
+          bottom: "calc(60px + env(safe-area-inset-bottom))",
+          background: PAPER,
+          borderTop: `1px solid ${BARK}44`,
+          boxShadow: "0 -6px 14px rgba(28,27,25,.06)",
+        }}
+      >
+        <FilterChips active={filter} onSelect={setFilter} statoOptions={statoOptions} />
       </div>
     </div>
   );

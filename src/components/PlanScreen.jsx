@@ -16,7 +16,7 @@ export default function PlanScreen({ planned, onAdd, onDelete, plants, tipoOptio
 
   return (
     <div style={{ background: PAPER, minHeight: "100dvh" }}>
-      <TopBar title="STAB · Pianificazione" />
+      <TopBar title="Pianificazione" />
 
       <div className="px-4 pt-3 pb-2">
         <button

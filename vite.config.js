@@ -20,8 +20,8 @@ export default defineConfig({
       registerType: "prompt",
       includeAssets: ["favicon.svg"],
       manifest: {
-        name: "STAB Bonsai",
-        short_name: "Bonsai",
+        name: "Bonsai Manager",
+        short_name: "Bonsai Manager",
         description: "Gestione collezione bonsai — soci STAB",
         lang: "it",
         theme_color: "#1C1B19",
