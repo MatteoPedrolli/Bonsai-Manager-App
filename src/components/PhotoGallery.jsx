@@ -4,7 +4,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { Camera, Images, ImageIcon, Plus, X, ChevronLeft, ChevronRight, Trash2, Pencil, CalendarDays } from "lucide-react";
 import { db } from "../lib/db.js";
 import {
-  addPhotos, deletePhoto, updatePhotoCaption, updatePhotoDate, sortPhotos, photoDate,
+  addPhotos, deletePhoto, updatePhotoCaption, updatePhotoDate, sortPhotosNewestFirst, photoDate,
 } from "../lib/photos.js";
 import { INK, PAPER, PAPER_DEEP, BARK, SEAL, FONT_DISPLAY, FONT_BODY } from "../lib/constants.js";
 
@@ -42,9 +42,10 @@ function useObjectUrls(photos) {
 //  Striscia foto cronologica + pulsante aggiungi
 // =============================================================================
 export function PhotoStrip({ plantId, onNotify }) {
-  // Ordine cronologico per data di SCATTO (takenAt), non di caricamento.
+  // Ordine cronologico inverso per data di SCATTO (takenAt), non di caricamento:
+  // prima le più recenti, si scorre indietro nel tempo.
   const photos = useLiveQuery(
-    () => db.photos.where("plantId").equals(plantId).toArray().then(sortPhotos),
+    () => db.photos.where("plantId").equals(plantId).toArray().then(sortPhotosNewestFirst),
     [plantId],
     []
   );
@@ -76,13 +77,8 @@ export function PhotoStrip({ plantId, onNotify }) {
     e.target.value = ""; // permette di ri-selezionare lo stesso file
   };
 
-  // Eliminazione rapida dalla miniatura (coerente per foto da fotocamera,
-  // galleria o Drive; funziona anche se la foto non si carica).
-  const handleThumbDelete = async (e, id) => {
-    e.stopPropagation();
-    await deletePhoto(id);
-    onNotify?.("Foto eliminata");
-  };
+  // Nota: sulla miniatura non c'è il cestino — si eliminava una foto per sbaglio
+  // troppo facilmente. L'eliminazione sta solo nel visore, con conferma.
 
   return (
     <>
@@ -117,17 +113,6 @@ export function PhotoStrip({ plantId, onNotify }) {
             >
               {shortDate(photoDate(photo))}
             </span>
-            <button
-              onClick={(e) => handleThumbDelete(e, photo.id)}
-              aria-label="Elimina foto"
-              className="absolute flex items-center justify-center"
-              style={{
-                top: 3, right: 3, width: 22, height: 22, borderRadius: "50%",
-                background: "rgba(28,27,25,.62)", color: PAPER, border: "none",
-              }}
-            >
-              <Trash2 size={12} />
-            </button>
           </div>
         ))}
 

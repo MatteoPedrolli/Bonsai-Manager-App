@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useLayoutEffect, useCallback, useRef } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "./lib/db.js";
 import {
@@ -65,8 +65,26 @@ export default function App() {
     }
   }, [view, plants, selected]);
 
+  // Lo scroll è del documento e sopravvive al cambio vista: aprendo una scheda
+  // dal fondo della collezione ci si ritrovava a metà pagina. Entrando in una
+  // scheda si va in cima, tornando indietro si ritrova il punto della lista.
+  const homeScroll = useRef(0);
+  useLayoutEffect(() => {
+    window.scrollTo(0, view === "home" ? homeScroll.current : 0);
+  }, [view, selectedId]);
+
   // --- Handlers ---
-  const openPlant = (id) => { setSelectedId(id); setView("detail"); };
+  const openPlant = (id) => {
+    homeScroll.current = window.scrollY;
+    setSelectedId(id);
+    setView("detail");
+  };
+
+  // Cambio di tab: la collezione riparte dall'alto, non dal punto memorizzato.
+  const goToTab = (next) => {
+    homeScroll.current = 0;
+    setView(next);
+  };
 
   const handleCreatePlant = async (data) => {
     const id = await repo.createPlant(data);
@@ -117,7 +135,7 @@ export default function App() {
           onOpen={openPlant}
           onNew={() => setShowNewPlant(true)}
           statoOptions={statoOptions}
-          onGoTo={setView}
+          onGoTo={goToTab}
           backupStale={backupStale}
         />
       )}
@@ -160,7 +178,7 @@ export default function App() {
       {view !== "detail" && (
         <TabBar
           active={activeTab}
-          onSelect={setView}
+          onSelect={goToTab}
           onNewIntervento={() => setShowNewIntervento(true)}
           badges={{ plan: due.due }}
         />

@@ -111,6 +111,13 @@ export function sortPhotos(list) {
   return [...list].sort((a, b) => (photoDate(a) < photoDate(b) ? -1 : photoDate(a) > photoDate(b) ? 1 : a.id - b.id));
 }
 
+// Ordine di visualizzazione nella striscia della scheda: prima le più recenti.
+// L'ordine canonico resta crescente: la copertina in Home prende l'ultima
+// (`.at(-1)` = la più recente) e l'album esportato racconta la crescita.
+export function sortPhotosNewestFirst(list) {
+  return sortPhotos(list).reverse();
+}
+
 // Foto di una pianta in ordine cronologico (spec §7).
 export async function getPhotos(plantId) {
   const list = await db.photos.where("plantId").equals(plantId).toArray();

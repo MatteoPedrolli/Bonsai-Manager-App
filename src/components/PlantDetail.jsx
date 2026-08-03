@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, X, Trash2 } from "lucide-react";
+import { Plus, X, Trash2, Pencil, Check } from "lucide-react";
 import {
   INK, PAPER, PAPER_DEEP, SEAL, BARK, FONT_DISPLAY, FONT_BODY,
   colorForStato, fmtDate,
@@ -36,9 +36,18 @@ export default function PlantDetail({ plant, onBack, onUpdate, onDelete, statoOp
   // committato su DB al blur per non scrivere ad ogni tasto.
   const [measures, setMeasures] = useState({ altezza: plant.altezza, profondita: plant.profondita, larghezza: plant.larghezza });
   const [note, setNote] = useState(plant.note || "");
+
+  // Anagrafica (nome/specie/provenienza): non sempre modificabile, per non
+  // cambiarla per sbaglio toccando il titolo. Si apre con la matita in barra.
+  const [editIdent, setEditIdent] = useState(false);
+  const identOf = (p) => ({ nome: p.nome, specie: p.specie || "", provenienza: p.provenienza || "" });
+  const [ident, setIdent] = useState(() => identOf(plant));
+
   useEffect(() => {
     setMeasures({ altezza: plant.altezza, profondita: plant.profondita, larghezza: plant.larghezza });
     setNote(plant.note || "");
+    setIdent(identOf(plant));
+    setEditIdent(false);
   }, [plant.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleStato = (tag) => {
@@ -53,6 +62,18 @@ export default function PlantDetail({ plant, onBack, onUpdate, onDelete, statoOp
 
   const commitNote = () => {
     if (note !== (plant.note || "")) onUpdate(plant.id, { note });
+  };
+
+  const commitIdent = (field) => {
+    const val = (ident[field] || "").trim();
+    if (field === "nome" && !val) {
+      // Il nome identifica la scheda ovunque (lista, export, storico): non può
+      // restare vuoto. Si ripristina quello salvato invece di bloccare il campo.
+      setIdent((s) => ({ ...s, nome: plant.nome }));
+      onNotify?.("Il nome non può restare vuoto");
+      return;
+    }
+    if (val !== (plant[field] || "")) onUpdate(plant.id, { [field]: val });
   };
 
   const exportStorico = () => {
@@ -86,12 +107,47 @@ figcaption{font-size:13px;color:#8C7B65;margin-top:6px}</style></head>
 
   return (
     <div style={{ background: PAPER, minHeight: "100dvh" }}>
-      <TopBar title={plant.nome} onBack={onBack} />
+      <TopBar
+        title={plant.nome}
+        onBack={onBack}
+        right={
+          <button
+            onClick={() => setEditIdent((v) => !v)}
+            className="p-1"
+            aria-label={editIdent ? "Fine modifica" : "Modifica nome e specie"}
+          >
+            {editIdent ? <Check size={19} /> : <Pencil size={17} />}
+          </button>
+        }
+      />
 
       <div className="px-4 pt-4">
-        <div style={{ fontFamily: FONT_BODY, fontSize: 12, color: BARK, fontStyle: "italic" }}>
-          {plant.specie}{plant.provenienza ? ` — ${plant.provenienza}` : ""}
-        </div>
+        {editIdent ? (
+          <div className="p-3 mb-1" style={inputCard}>
+            {[["nome", "Nome"], ["specie", "Specie"], ["provenienza", "Provenienza"]].map(([field, label]) => (
+              <label key={field} className="block mb-2 last:mb-0">
+                <span style={{ fontFamily: FONT_BODY, fontSize: 10, color: BARK }}>{label}</span>
+                <input
+                  value={ident[field]}
+                  onChange={(e) => setIdent((s) => ({ ...s, [field]: e.target.value }))}
+                  onBlur={() => commitIdent(field)}
+                  onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                  placeholder={field === "provenienza" ? "Vivaio, raccolta, dono…" : ""}
+                  className="w-full px-2 py-1.5 mt-0.5"
+                  style={{
+                    border: `1px solid ${BARK}55`, borderRadius: 4, background: PAPER,
+                    fontFamily: field === "nome" ? FONT_DISPLAY : FONT_BODY,
+                    fontSize: field === "nome" ? 16 : 12.5, color: INK, outline: "none",
+                  }}
+                />
+              </label>
+            ))}
+          </div>
+        ) : (
+          <div style={{ fontFamily: FONT_BODY, fontSize: 12, color: BARK, fontStyle: "italic" }}>
+            {plant.specie}{plant.provenienza ? ` — ${plant.provenienza}` : ""}
+          </div>
+        )}
 
         {/* Tag tipo + stato */}
         <div className="mt-1 mb-4 flex items-center gap-1 flex-wrap">

@@ -15,10 +15,20 @@ export const FONT_DISPLAY = "'Shippori Mincho', serif";
 export const FONT_BODY = "'IBM Plex Sans', sans-serif";
 
 // Versione app, mostrata in Opzioni (spec §8).
-export const APP_VERSION = "0.5.0";
+export const APP_VERSION = "0.6.0";
 
 // Changelog visibile in app (spec §8). Più recente in cima.
 export const CHANGELOG = [
+  {
+    version: "0.6.0",
+    date: "2026-08-03",
+    items: [
+      "Nome, specie e provenienza della scheda ora si possono correggere (matita in alto a destra)",
+      "Foto in ordine dalla più recente alla più vecchia",
+      "Tolto il cestino dalle miniature: le foto si eliminano dal visore, con conferma",
+      "Aprendo una scheda si parte dall'inizio, tornando indietro si ritrova il punto della lista",
+    ],
+  },
   {
     version: "0.5.0",
     date: "2026-08-03",
