@@ -31,13 +31,22 @@ db.version(1).stores({
   meta: "&key",                         // key/value: opzioni tag, versione, ecc.
 });
 
-// ESEMPIO per il futuro (NON attivare finché non serve — lasciato come riferimento):
-// db.version(2).stores({ plants: "++id, nome, updatedAt, specie" })
-//   .upgrade(async (tx) => {
-//     await tx.table("plants").toCollection().modify((p) => {
-//       if (p.nuovoCampo === undefined) p.nuovoCampo = valoreDefault;
-//     });
-//   });
+// -- Versione 2 --
+// Aggiunge `takenAt`: la data in cui la foto è stata SCATTATA (da EXIF o scelta
+// dal socio), distinta da `createdAt` che è quando è stata caricata nell'app.
+// L'ordinamento cronologico usa takenAt.
+// Le foto già presenti non hanno l'informazione originale: si usa createdAt
+// come valore di partenza, modificabile a mano dal visore foto.
+db.version(2).stores({
+  plants: "++id, nome, updatedAt",
+  photos: "++id, plantId, createdAt, takenAt",
+  planned: "++id, data",
+  meta: "&key",
+}).upgrade(async (tx) => {
+  await tx.table("photos").toCollection().modify((p) => {
+    if (!p.takenAt) p.takenAt = p.createdAt;
+  });
+});
 
 // -----------------------------------------------------------------------------
 //  SEED alla prima creazione del DB (gira una sola volta per dispositivo)
@@ -46,7 +55,7 @@ db.on("populate", async (tx) => {
   await tx.table("meta").bulkPut([
     { key: "tipoOptions", value: DEFAULT_TIPO_OPTIONS },
     { key: "statoOptions", value: DEFAULT_STATO_OPTIONS },
-    { key: "schemaVersion", value: 1 },
+    { key: "schemaVersion", value: 2 },
   ]);
   await tx.table("plants").bulkAdd(seedPlants());
 });

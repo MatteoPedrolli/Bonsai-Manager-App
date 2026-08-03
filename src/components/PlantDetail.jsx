@@ -6,7 +6,7 @@ import {
 } from "../lib/constants.js";
 import { Seal, TopBar, Ring } from "./common.jsx";
 import { PhotoStrip } from "./PhotoGallery.jsx";
-import { getPhotos } from "../lib/photos.js";
+import { getPhotos, photoDate } from "../lib/photos.js";
 
 function blobToDataURL(blob) {
   return new Promise((res, rej) => {
@@ -71,7 +71,7 @@ export default function PlantDetail({ plant, onBack, onUpdate, onDelete, statoOp
     const imgs = [];
     for (const p of photos) {
       const dataUrl = await blobToDataURL(p.blob);
-      imgs.push(`<figure><img src="${dataUrl}" alt=""/><figcaption>${fmtDate(p.createdAt)}${p.caption ? " — " + p.caption : ""}</figcaption></figure>`);
+      imgs.push(`<figure><img src="${dataUrl}" alt=""/><figcaption>${fmtDate(photoDate(p))}${p.caption ? " — " + p.caption : ""}</figcaption></figure>`);
     }
     const html = `<!doctype html><html lang="it"><head><meta charset="utf-8"><title>Album ${plant.nome}</title>
 <style>body{font-family:sans-serif;background:#E6E2D6;color:#1C1B19;margin:0;padding:24px}

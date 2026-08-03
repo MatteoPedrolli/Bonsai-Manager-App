@@ -1,5 +1,6 @@
 import imageCompression from "browser-image-compression";
 import { db } from "./db.js";
+import { bestPhotoDate } from "./exif.js";
 
 // Compressione lato client (spec §2, requisito hard): max ~1600px lato lungo,
 // qualità ~80%, normalizzata a JPEG. Senza questo lo storage esplode.
@@ -54,6 +55,10 @@ export async function addPhotos(plantId, fileList) {
 
   let count = 0;
   for (const original of files) {
+    // La data di scatto va letta dal file ORIGINALE: la compressione
+    // (e la conversione HEIC) rimuovono i metadati EXIF.
+    const takenAt = (await bestPhotoDate(original)).toISOString();
+
     let file = original;
     if (isHeic(file)) {
       try {
@@ -69,6 +74,7 @@ export async function addPhotos(plantId, fileList) {
       blob,
       caption: "",
       createdAt: now(),
+      takenAt,
       takenName: original.name || "",
     });
     count++;
@@ -84,8 +90,29 @@ export async function updatePhotoCaption(id, caption) {
   await db.photos.update(id, { caption });
 }
 
+// Corregge a mano la data di scatto (input date: "AAAA-MM-GG").
+// Le foto vengono automaticamente riordinate.
+export async function updatePhotoDate(id, isoDay) {
+  if (!isoDay) return;
+  const existing = await db.photos.get(id);
+  // Mantiene l'ora originale, cambia solo il giorno.
+  const prev = new Date(existing?.takenAt || existing?.createdAt || Date.now());
+  const [y, m, d] = isoDay.split("-").map(Number);
+  const next = new Date(y, m - 1, d, prev.getHours(), prev.getMinutes(), prev.getSeconds());
+  await db.photos.update(id, { takenAt: next.toISOString() });
+}
+
+// Data usata per l'ordinamento: scatto se nota, altrimenti caricamento.
+export function photoDate(p) {
+  return p?.takenAt || p?.createdAt || "";
+}
+
+export function sortPhotos(list) {
+  return [...list].sort((a, b) => (photoDate(a) < photoDate(b) ? -1 : photoDate(a) > photoDate(b) ? 1 : a.id - b.id));
+}
+
 // Foto di una pianta in ordine cronologico (spec §7).
 export async function getPhotos(plantId) {
   const list = await db.photos.where("plantId").equals(plantId).toArray();
-  return list.sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
+  return sortPhotos(list);
 }

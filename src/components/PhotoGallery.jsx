@@ -1,11 +1,29 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Camera, Images, Cloud, ImageIcon, Plus, X, ChevronLeft, ChevronRight, Trash2, Pencil } from "lucide-react";
+import { Camera, Images, ImageIcon, Plus, X, ChevronLeft, ChevronRight, Trash2, Pencil, CalendarDays } from "lucide-react";
 import { db } from "../lib/db.js";
-import { addPhotos, deletePhoto, updatePhotoCaption } from "../lib/photos.js";
-import { pickFromDrive, isDriveConfigured } from "../lib/googleDrive.js";
-import { INK, PAPER, PAPER_DEEP, BARK, SEAL, FONT_DISPLAY, FONT_BODY, fmtDate } from "../lib/constants.js";
+import {
+  addPhotos, deletePhoto, updatePhotoCaption, updatePhotoDate, sortPhotos, photoDate,
+} from "../lib/photos.js";
+import { INK, PAPER, PAPER_DEEP, BARK, SEAL, FONT_DISPLAY, FONT_BODY } from "../lib/constants.js";
+
+// ISO -> "AAAA-MM-GG" per <input type="date"> (in ora locale, non UTC).
+function toInputDay(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d)) return "";
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+// Etichetta compatta per la miniatura: "set 2019".
+function shortDate(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d)) return "";
+  return d.toLocaleDateString("it-IT", { month: "short", year: "numeric" });
+}
 
 // Crea/revoca gli object URL per i blob delle foto, seguendo l'elenco corrente.
 function useObjectUrls(photos) {
@@ -24,8 +42,9 @@ function useObjectUrls(photos) {
 //  Striscia foto cronologica + pulsante aggiungi
 // =============================================================================
 export function PhotoStrip({ plantId, onNotify }) {
+  // Ordine cronologico per data di SCATTO (takenAt), non di caricamento.
   const photos = useLiveQuery(
-    () => db.photos.where("plantId").equals(plantId).sortBy("createdAt"),
+    () => db.photos.where("plantId").equals(plantId).toArray().then(sortPhotos),
     [plantId],
     []
   );
@@ -55,20 +74,6 @@ export function PhotoStrip({ plantId, onNotify }) {
     const files = e.target.files;
     await ingest(files, "nel salvataggio");
     e.target.value = ""; // permette di ri-selezionare lo stesso file
-  };
-
-  const handleDrive = async () => {
-    setSheet(false);
-    setBusy(true);
-    try {
-      const files = await pickFromDrive();
-      if (files.length) await ingest(files, "da Google Drive");
-    } catch (err) {
-      console.error(err);
-      onNotify?.(err.message || "Errore Google Drive");
-    } finally {
-      setBusy(false);
-    }
   };
 
   // Eliminazione rapida dalla miniatura (coerente per foto da fotocamera,
@@ -103,6 +108,15 @@ export function PhotoStrip({ plantId, onNotify }) {
                 </span>
               </span>
             )}
+            <span
+              className="absolute left-0 right-0 bottom-0 text-center"
+              style={{
+                background: "linear-gradient(transparent, rgba(28,27,25,.72))",
+                color: PAPER, fontFamily: FONT_BODY, fontSize: 9, padding: "8px 2px 2px",
+              }}
+            >
+              {shortDate(photoDate(photo))}
+            </span>
             <button
               onClick={(e) => handleThumbDelete(e, photo.id)}
               aria-label="Elimina foto"
@@ -137,7 +151,6 @@ export function PhotoStrip({ plantId, onNotify }) {
           onClose={() => setSheet(false)}
           onCamera={() => { setSheet(false); cameraRef.current?.click(); }}
           onGallery={() => { setSheet(false); galleryRef.current?.click(); }}
-          onDrive={handleDrive}
         />
       )}
 
@@ -155,8 +168,9 @@ export function PhotoStrip({ plantId, onNotify }) {
 }
 
 // Action sheet: scelta sorgente foto (spec §7).
-function SourceSheet({ onClose, onCamera, onGallery, onDrive }) {
-  const driveOn = isDriveConfigured();
+// Il selettore di sistema ("Da galleria") espone già le foto del cloud
+// (Google Foto), quindi non serve un'integrazione dedicata.
+function SourceSheet({ onClose, onCamera, onGallery }) {
   const Row = ({ icon: Icon, label, hint, onClick, disabled }) => (
     <button
       onClick={onClick}
@@ -186,14 +200,7 @@ function SourceSheet({ onClose, onCamera, onGallery, onDrive }) {
           <button onClick={onClose} aria-label="Chiudi"><X size={20} color={INK} /></button>
         </div>
         <Row icon={Camera} label="Scatta foto" hint="Fotocamera del dispositivo" onClick={onCamera} />
-        <Row icon={Images} label="Da galleria" hint="Scegli una o più immagini" onClick={onGallery} />
-        <Row
-          icon={Cloud}
-          label="Da Google Drive"
-          hint={driveOn ? "Login Google solo per l'import" : "Non configurato (vedi README)"}
-          onClick={onDrive}
-          disabled={!driveOn}
-        />
+        <Row icon={Images} label="Da galleria" hint="Foto del telefono e Google Foto" onClick={onGallery} />
       </div>
     </div>,
     document.body
@@ -208,20 +215,34 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify }) {
   const [index, setIndex] = useState(startIndex);
   const [confirmDel, setConfirmDel] = useState(false);
   const touch = useRef({ x: 0, y: 0, active: false });
+  const keepFollowingId = useRef(null);
 
   const count = photos.length;
   const current = photos[index];
 
-  // Bozza didascalia, sincronizzata al cambio foto; salvata al blur.
+  // Bozze didascalia e data, sincronizzate al cambio foto; salvate al blur.
   const [caption, setCaption] = useState(current?.caption || "");
+  const [day, setDay] = useState(toInputDay(photoDate(current)));
   useEffect(() => {
     setCaption(current?.caption || "");
+    setDay(toInputDay(photoDate(current)));
   }, [current?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const saveCaption = () => {
     if (current && caption !== (current.caption || "")) {
       updatePhotoCaption(current.id, caption.trim());
     }
+  };
+
+  // Cambiando la data la foto si riposiziona da sola nell'ordine cronologico:
+  // seguiamo l'immagine per non ritrovarci su un'altra foto.
+  const saveDay = async () => {
+    if (!current || !day || day === toInputDay(photoDate(current))) return;
+    // Il segnalibro va messo PRIMA della scrittura: l'elenco può aggiornarsi
+    // subito dopo il commit, anche prima che la update() ritorni.
+    keepFollowingId.current = current.id;
+    await updatePhotoDate(current.id, day);
+    onNotify?.("Data aggiornata");
   };
 
   const go = useCallback(
@@ -237,6 +258,15 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify }) {
     if (count === 0) onClose();
     else if (index >= count) setIndex(count - 1);
   }, [count, index, onClose]);
+
+  // Dopo un cambio data l'ordine si aggiorna: resta sulla stessa foto.
+  useEffect(() => {
+    const id = keepFollowingId.current;
+    if (id == null) return;
+    const pos = photos.findIndex((p) => p.id === id);
+    if (pos >= 0 && pos !== index) setIndex(pos);
+    keepFollowingId.current = null;
+  }, [photos, index]);
 
   // Tastiera + blocco scroll di fondo
   useEffect(() => {
@@ -347,9 +377,24 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify }) {
         </div>
 
         <div className="flex items-center justify-between gap-3">
-          <div style={{ fontFamily: FONT_BODY, fontSize: 12, color: PAPER, opacity: 0.7 }}>
-            {fmtDate(current.createdAt)}
-          </div>
+          {/* Data dello scatto: modificabile, riordina le foto */}
+          <label
+            className="flex items-center gap-2 px-3 py-2 flex-shrink-0"
+            style={{ background: "rgba(255,255,255,.08)", borderRadius: 8, cursor: "pointer" }}
+            title="Data della foto — determina l'ordine cronologico"
+          >
+            <CalendarDays size={14} color={PAPER} style={{ opacity: 0.6 }} />
+            <input
+              type="date"
+              value={day}
+              onChange={(e) => setDay(e.target.value)}
+              onBlur={saveDay}
+              style={{
+                background: "transparent", border: "none", outline: "none",
+                color: PAPER, fontFamily: FONT_BODY, fontSize: 12.5, colorScheme: "dark",
+              }}
+            />
+          </label>
 
           {!confirmDel ? (
           <button

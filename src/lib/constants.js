@@ -15,10 +15,20 @@ export const FONT_DISPLAY = "'Shippori Mincho', serif";
 export const FONT_BODY = "'IBM Plex Sans', sans-serif";
 
 // Versione app, mostrata in Opzioni (spec §8).
-export const APP_VERSION = "0.4.0";
+export const APP_VERSION = "0.5.0";
 
 // Changelog visibile in app (spec §8). Più recente in cima.
 export const CHANGELOG = [
+  {
+    version: "0.5.0",
+    date: "2026-08-03",
+    items: [
+      "Le foto si ordinano da sole per data di scatto, anche se caricate dopo",
+      "Data della foto modificabile dal visore a schermo intero",
+      "Data visibile sulle miniature",
+      "Menu foto semplificato (la galleria include già Google Foto)",
+    ],
+  },
   {
     version: "0.4.0",
     date: "2026-07-21",

@@ -7,11 +7,12 @@ import {
 } from "../lib/constants.js";
 import { Seal, TopBar, Banner } from "./common.jsx";
 import { dueSummary } from "../lib/reminders.js";
+import { sortPhotos } from "../lib/photos.js";
 
-// Miniatura di copertina: prima foto della pianta (se presente).
+// Miniatura di copertina: foto più recente della pianta (per data di scatto).
 function CoverThumb({ plantId }) {
   const first = useLiveQuery(
-    () => db.photos.where("plantId").equals(plantId).sortBy("createdAt").then((a) => a[0]),
+    () => db.photos.where("plantId").equals(plantId).toArray().then((a) => sortPhotos(a).at(-1)),
     [plantId]
   );
   const [url, setUrl] = useState(null);

@@ -38,6 +38,7 @@ export async function exportBackup() {
       plantId: p.plantId,
       caption: p.caption || "",
       createdAt: p.createdAt,
+      takenAt: p.takenAt || p.createdAt, // data di scatto (ordinamento cronologico)
       takenName: p.takenName || "",
       dataUrl: await blobToDataURL(p.blob),
     });
@@ -89,6 +90,8 @@ export async function importBackup(file) {
       plantId: ph.plantId,
       caption: ph.caption || "",
       createdAt: ph.createdAt,
+      // I backup creati prima della v0.5.0 non hanno takenAt: si ricade su createdAt.
+      takenAt: ph.takenAt || ph.createdAt,
       takenName: ph.takenName || "",
       blob: await dataURLToBlob(ph.dataUrl),
     });
