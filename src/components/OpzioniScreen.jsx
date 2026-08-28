@@ -1,17 +1,19 @@
 import { useState, useRef } from "react";
-import { Plus, Trash2, Download, Upload } from "lucide-react";
+import { Plus, Trash2, Download, Upload, ShieldCheck, ShieldAlert } from "lucide-react";
 import {
-  INK, PAPER, PAPER_DEEP, SEAL, BARK, FONT_DISPLAY, FONT_BODY, PRESET_COLORS,
+  INK, PAPER, PAPER_DEEP, SEAL, BARK, MOSS, FONT_DISPLAY, FONT_BODY, PRESET_COLORS,
   APP_VERSION, CHANGELOG, fmtDate,
 } from "../lib/constants.js";
 import { Seal, TopBar } from "./common.jsx";
 import { computeStats } from "../lib/stats.js";
+import { formatBytes } from "../lib/storage.js";
 
 export default function OpzioniScreen({
   tipoOptions, statoOptions, onSaveTipo, onSaveStato, onExport, onImport, version,
-  plants, lastBackupAt,
+  plants, lastBackupAt, storage, hasUnsavedChanges,
 }) {
   const stats = computeStats(plants);
+  const protetto = storage?.persisted === true;
   const [newTipo, setNewTipo] = useState("");
   const [newStato, setNewStato] = useState("");
   const [newStatoColor, setNewStatoColor] = useState(PRESET_COLORS[0]);
@@ -88,10 +90,45 @@ export default function OpzioniScreen({
           Ultima attività: {stats.ultimaAttivita ? fmtDate(stats.ultimaAttivita) : "—"}
         </div>
 
+        {/* --- Stato di protezione dei dati --- */}
+        <div style={sectionTitle}>Sicurezza dei dati</div>
+        <div
+          className="flex items-start gap-3 p-3 mb-3"
+          style={{
+            background: protetto ? `${MOSS}14` : `${SEAL}12`,
+            border: `1px solid ${protetto ? MOSS : SEAL}`,
+            borderRadius: 6,
+          }}
+        >
+          {protetto
+            ? <ShieldCheck size={20} color={MOSS} style={{ flexShrink: 0, marginTop: 1 }} />
+            : <ShieldAlert size={20} color={SEAL} style={{ flexShrink: 0, marginTop: 1 }} />}
+          <div className="min-w-0">
+            <div style={{ fontFamily: FONT_BODY, fontSize: 12.5, color: INK, fontWeight: 600 }}>
+              {protetto ? "Dati protetti su questo dispositivo" : "Dati non protetti"}
+            </div>
+            <div style={{ fontFamily: FONT_BODY, fontSize: 11.5, color: BARK, marginTop: 2 }}>
+              {protetto
+                ? "Il browser non cancellerà la collezione per liberare spazio. Resta comunque legata a questo dispositivo: se lo perdi o lo cambi, servono i backup."
+                : storage?.supported === false
+                ? "Questo browser non permette di bloccare la cancellazione automatica. Fai backup frequenti e conservali fuori dal dispositivo."
+                : "Il browser può cancellare la collezione quando ha bisogno di spazio. Installa l’app sulla schermata home (menu del browser → “Installa app” / “Aggiungi a Home”) e riapri: il permesso viene concesso da solo."}
+            </div>
+            {storage?.usage > 0 && (
+              <div style={{ fontFamily: FONT_BODY, fontSize: 11, color: BARK, marginTop: 4 }}>
+                Spazio occupato: {formatBytes(storage.usage)}
+                {storage.quota ? ` di ${formatBytes(storage.quota)} disponibili` : ""}
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* --- Backup --- */}
         <div style={sectionTitle}>Backup dati</div>
         <div className="mb-2" style={{ fontFamily: FONT_BODY, fontSize: 11.5, color: BARK }}>
           Salva o ripristina l’intera collezione (schede, foto, storico) in un unico file.
+          Conservalo <b>fuori dal telefono</b> (Drive, mail, computer): è l’unica copia che
+          sopravvive alla perdita del dispositivo.
         </div>
         <div className="flex gap-2 mb-3">
           <button onClick={onExport} className="flex-1 py-2.5 flex items-center justify-center gap-2" style={{ background: INK, color: PAPER, borderRadius: 4, fontFamily: FONT_BODY, fontSize: 12.5 }}>
@@ -129,8 +166,12 @@ export default function OpzioniScreen({
           </div>
         )}
 
-        <div className="mb-6" style={{ fontFamily: FONT_BODY, fontSize: 11, color: lastBackupAt ? BARK : SEAL }}>
-          {lastBackupAt ? `Ultimo backup: ${fmtDate(lastBackupAt)}` : "Nessun backup ancora effettuato."}
+        <div className="mb-6" style={{ fontFamily: FONT_BODY, fontSize: 11, color: hasUnsavedChanges ? SEAL : BARK }}>
+          {!lastBackupAt
+            ? "Nessun backup ancora effettuato."
+            : hasUnsavedChanges
+            ? `Ultimo backup: ${fmtDate(lastBackupAt)} — ci sono modifiche più recenti non ancora salvate.`
+            : `Ultimo backup: ${fmtDate(lastBackupAt)} — aggiornato.`}
         </div>
 
         {/* --- Tag Tipo --- */}

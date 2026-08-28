@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Plus, ImageIcon, ChevronRight, CalendarClock, Download } from "lucide-react";
+import { Plus, ImageIcon, ChevronRight, CalendarClock, Download, ShieldAlert } from "lucide-react";
 import { db } from "../lib/db.js";
 import {
   INK, PAPER, PAPER_DEEP, SEAL, BARK, FONT_DISPLAY, FONT_BODY, colorForStato,
@@ -86,7 +86,7 @@ function FilterChips({ active, onSelect, statoOptions }) {
   );
 }
 
-export default function Home({ plants, planned, onOpen, onNew, statoOptions, onGoTo, backupStale }) {
+export default function Home({ plants, planned, onOpen, onNew, statoOptions, onGoTo, backupStale, dataAtRisk }) {
   const [filter, setFilter] = useState("Tutte");
   const visible =
     filter === "Tutte" ? plants : (plants || []).filter((p) => (p.tags?.stato || []).includes(filter));
@@ -111,9 +111,18 @@ export default function Home({ plants, planned, onOpen, onNew, statoOptions, onG
             {dueMsg}
           </Banner>
         )}
+        {dataAtRisk && (
+          <Banner tone="warn" icon={ShieldAlert} actionLabel="Vedi ›" onClick={() => onGoTo?.("opzioni")}>
+            Il browser può cancellare i tuoi dati per liberare spazio. Salva un backup.
+          </Banner>
+        )}
         {backupStale && (
           <Banner tone="info" icon={Download} actionLabel="Backup ›" onClick={() => onGoTo?.("opzioni")}>
-            {backupStale === "never" ? "Non hai mai fatto un backup dei tuoi dati." : "È passato oltre un mese dall'ultimo backup."}
+            {backupStale === "never"
+              ? "Non hai mai fatto un backup dei tuoi dati."
+              : backupStale === "changes"
+              ? "Hai modifiche non ancora salvate in un backup."
+              : "È passato oltre un mese dall'ultimo backup."}
           </Banner>
         )}
       </div>

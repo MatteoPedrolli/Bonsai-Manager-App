@@ -15,10 +15,20 @@ export const FONT_DISPLAY = "'Shippori Mincho', serif";
 export const FONT_BODY = "'IBM Plex Sans', sans-serif";
 
 // Versione app, mostrata in Opzioni (spec §8).
-export const APP_VERSION = "0.6.0";
+export const APP_VERSION = "0.7.0";
 
 // Changelog visibile in app (spec §8). Più recente in cima.
 export const CHANGELOG = [
+  {
+    version: "0.7.0",
+    date: "2026-08-28",
+    items: [
+      "L'app chiede al browser di NON cancellare i tuoi dati per liberare spazio",
+      "Nuova sezione “Sicurezza dei dati” in Opzioni: dice se la collezione è protetta",
+      "Avviso in Collezione quando i dati sono a rischio o ci sono modifiche non salvate",
+      "Il backup si può condividere direttamente su Drive, mail o chat",
+    ],
+  },
   {
     version: "0.6.0",
     date: "2026-08-03",

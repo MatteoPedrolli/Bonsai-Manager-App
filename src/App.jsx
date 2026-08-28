@@ -5,7 +5,8 @@ import {
   DEFAULT_TIPO_OPTIONS, DEFAULT_STATO_OPTIONS, FONT_BODY, INK,
 } from "./lib/constants.js";
 import * as repo from "./lib/repo.js";
-import { exportBackup, importBackup } from "./lib/backup.js";
+import { exportBackup, importBackup, BackupAnnullato } from "./lib/backup.js";
+import { ensurePersisted, storageEstimate } from "./lib/storage.js";
 import { dueSummary } from "./lib/reminders.js";
 import { TabBar, Toast } from "./components/common.jsx";
 import Home from "./components/Home.jsx";
@@ -42,13 +43,46 @@ export default function App() {
   // Promemoria (Fase 3)
   const due = dueSummary(planned);
   const hasData = (plants || []).length > 0;
+
+  // --- Protezione dei dati ---------------------------------------------------
+  // Senza storage persistente il browser può cancellare tutto senza avvisare:
+  // si chiede il permesso all'avvio (su app installata è automatico e muto).
+  const [storage, setStorage] = useState({ checked: false, supported: false, persisted: false, usage: 0, quota: 0 });
+  const refreshStorage = useCallback(async () => {
+    const p = await ensurePersisted();
+    const e = await storageEstimate();
+    setStorage({ checked: true, ...p, usage: e?.usage || 0, quota: e?.quota || 0 });
+  }, []);
+  // All'avvio, e di nuovo entrando in Opzioni: al primo giro la stima dello
+  // spazio gira prima che i dati siano scritti e resterebbe ferma a zero.
+  useEffect(() => {
+    if (view === "opzioni" || !storage.checked) refreshStorage();
+  }, [view, storage.checked, refreshStorage]);
+
+  // "Ho modifiche non ancora salvate in un backup?" è un segnale molto più utile
+  // del solo tempo trascorso: si confronta l'ultima modifica (schede o foto)
+  // con la data dell'ultimo backup.
+  const lastPhotoAt = useLiveQuery(
+    () => db.photos.orderBy("createdAt").last().then((p) => p?.createdAt || ""),
+    [], ""
+  );
+  const lastChangeAt = (plants || []).reduce(
+    (max, p) => (p.updatedAt > max ? p.updatedAt : max),
+    lastPhotoAt || ""
+  );
+
   const backupStale = !hasData
     ? false
     : !lastBackupAt
     ? "never"
+    : lastChangeAt && lastChangeAt > lastBackupAt
+    ? "changes"
     : Date.now() - new Date(lastBackupAt).getTime() > MONTH_MS
     ? "stale"
     : false;
+
+  // Avviso forte: i dati non sono protetti E non c'è una copia recente.
+  const dataAtRisk = storage.checked && !storage.persisted && hasData;
 
   const notify = useCallback((msg) => setToast(msg), []);
   useEffect(() => {
@@ -109,8 +143,14 @@ export default function App() {
   const handleExport = async () => {
     try {
       const c = await exportBackup();
-      notify(`Backup esportato — ${c.plants} schede, ${c.photos} foto`);
+      notify(
+        c.method === "share"
+          ? `Backup condiviso — ${c.plants} schede, ${c.photos} foto`
+          : `Backup salvato — ${c.plants} schede, ${c.photos} foto`
+      );
+      refreshStorage();
     } catch (e) {
+      if (e instanceof BackupAnnullato) return notify("Backup annullato");
       console.error(e);
       notify("Errore durante l’export");
     }
@@ -137,6 +177,7 @@ export default function App() {
           statoOptions={statoOptions}
           onGoTo={goToTab}
           backupStale={backupStale}
+          dataAtRisk={dataAtRisk}
         />
       )}
 
@@ -172,6 +213,8 @@ export default function App() {
           onImport={handleImport}
           plants={plants || []}
           lastBackupAt={lastBackupAt}
+          storage={storage}
+          hasUnsavedChanges={backupStale === "changes" || backupStale === "never"}
         />
       )}
 

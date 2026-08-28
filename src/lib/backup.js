@@ -54,15 +54,49 @@ export async function exportBackup() {
   };
 
   const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+  const stamp = new Date().toISOString().slice(0, 10);
+  const filename = `stab-bonsai-backup_${stamp}.json`;
+
+  // Su telefono un file "scaricato" resta sullo stesso dispositivo che può
+  // perderlo: se il sistema lo permette si apre la condivisione, così il socio
+  // lo manda su Drive, in chat o nei file del telefono. Altrimenti, download.
+  const method = (await shareFile(blob, filename)) ? "share" : download(blob, filename);
+
+  await setMeta("lastBackupAt", new Date().toISOString());
+  return { ...payload.counts, method };
+}
+
+// Errore usato quando il socio chiude il foglio di condivisione: il backup
+// NON è stato salvato, quindi non va segnata la data.
+export class BackupAnnullato extends Error {
+  constructor() {
+    super("Backup annullato");
+    this.name = "BackupAnnullato";
+  }
+}
+
+// Ritorna true se il file è stato condiviso, false se la condivisione non è
+// disponibile (si ricade sul download). Lancia BackupAnnullato se l'utente chiude.
+async function shareFile(blob, filename) {
+  const file = new File([blob], filename, { type: "application/json" });
+  if (!navigator.canShare?.({ files: [file] })) return false;
+  try {
+    await navigator.share({ files: [file], title: "Backup Bonsai Manager" });
+    return true;
+  } catch (e) {
+    if (e?.name === "AbortError") throw new BackupAnnullato();
+    return false; // condivisione fallita per altri motivi: si prova il download
+  }
+}
+
+function download(blob, filename) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  const stamp = new Date().toISOString().slice(0, 10);
   a.href = url;
-  a.download = `stab-bonsai-backup_${stamp}.json`;
+  a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
-  await setMeta("lastBackupAt", new Date().toISOString());
-  return payload.counts;
+  return "download";
 }
 
 // ---------------------------------------------------------------------------
