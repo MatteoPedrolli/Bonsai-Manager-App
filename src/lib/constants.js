@@ -15,10 +15,19 @@ export const FONT_DISPLAY = "'Shippori Mincho', serif";
 export const FONT_BODY = "'IBM Plex Sans', sans-serif";
 
 // Versione app, mostrata in Opzioni (spec §8).
-export const APP_VERSION = "0.7.0";
+export const APP_VERSION = "0.7.1";
 
 // Changelog visibile in app (spec §8). Più recente in cima.
 export const CHANGELOG = [
+  {
+    version: "0.7.1",
+    date: "2026-08-28",
+    items: [
+      "Backup con due pulsanti distinti: “Salva sul dispositivo” e “Condividi”",
+      "Il file salvato sul dispositivo resta anche se il browser cancella i dati dell’app",
+      "Promemoria di backup ogni 15 giorni invece che ogni mese",
+    ],
+  },
   {
     version: "0.7.0",
     date: "2026-08-28",

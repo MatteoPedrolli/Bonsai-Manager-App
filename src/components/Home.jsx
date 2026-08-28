@@ -122,7 +122,7 @@ export default function Home({ plants, planned, onOpen, onNew, statoOptions, onG
               ? "Non hai mai fatto un backup dei tuoi dati."
               : backupStale === "changes"
               ? "Hai modifiche non ancora salvate in un backup."
-              : "È passato oltre un mese dall'ultimo backup."}
+              : "Sono passati più di 15 giorni dall'ultimo backup."}
           </Banner>
         )}
       </div>

@@ -23,7 +23,22 @@ async function dataURLToBlob(dataURL) {
 // ---------------------------------------------------------------------------
 //  EXPORT
 // ---------------------------------------------------------------------------
-export async function exportBackup() {
+// Il foglio di condivisione del sistema è disponibile? (telefoni sì, desktop
+// quasi mai). Serve a decidere se mostrare il pulsante "Condividi".
+export function canShareBackup() {
+  try {
+    const probe = new File([""], "probe.json", { type: "application/json" });
+    return Boolean(navigator.canShare?.({ files: [probe] }));
+  } catch {
+    return false;
+  }
+}
+
+// mode "telefono": scarica il file (finisce in Download, che NON è "dati del
+// sito" e quindi sopravvive alla cancellazione automatica della collezione).
+// mode "condividi": apre il foglio di sistema per mandarlo su Drive/mail/chat,
+// cioè fuori dal dispositivo. Sono due protezioni diverse e servono entrambe.
+export async function exportBackup(mode = "telefono") {
   const [plants, planned, meta, photoRows] = await Promise.all([
     db.plants.toArray(),
     db.planned.toArray(),
@@ -57,10 +72,12 @@ export async function exportBackup() {
   const stamp = new Date().toISOString().slice(0, 10);
   const filename = `stab-bonsai-backup_${stamp}.json`;
 
-  // Su telefono un file "scaricato" resta sullo stesso dispositivo che può
-  // perderlo: se il sistema lo permette si apre la condivisione, così il socio
-  // lo manda su Drive, in chat o nei file del telefono. Altrimenti, download.
-  const method = (await shareFile(blob, filename)) ? "share" : download(blob, filename);
+  // Se la condivisione non è disponibile si ricade sul download: meglio un
+  // backup nel posto sbagliato che nessun backup.
+  const method =
+    mode === "condividi" && (await shareFile(blob, filename))
+      ? "condividi"
+      : download(blob, filename);
 
   await setMeta("lastBackupAt", new Date().toISOString());
   return { ...payload.counts, method };
@@ -96,7 +113,7 @@ function download(blob, filename) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
-  return "download";
+  return "telefono";
 }
 
 // ---------------------------------------------------------------------------

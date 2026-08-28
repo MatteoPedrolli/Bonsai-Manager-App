@@ -17,7 +17,9 @@ import PlanScreen from "./components/PlanScreen.jsx";
 import OpzioniScreen from "./components/OpzioniScreen.jsx";
 import UpdatePrompt from "./components/UpdatePrompt.jsx";
 
-const MONTH_MS = 30 * 86400000;
+// Ogni quanto ricordare un backup, anche senza modifiche recenti.
+// 15 giorni: un mese si è rivelato troppo largo (perdita dati, agosto 2026).
+const BACKUP_OGNI_MS = 15 * 86400000;
 
 export default function App() {
   const [view, setView] = useState("home"); // home | detail | plan | opzioni
@@ -77,7 +79,7 @@ export default function App() {
     ? "never"
     : lastChangeAt && lastChangeAt > lastBackupAt
     ? "changes"
-    : Date.now() - new Date(lastBackupAt).getTime() > MONTH_MS
+    : Date.now() - new Date(lastBackupAt).getTime() > BACKUP_OGNI_MS
     ? "stale"
     : false;
 
@@ -140,13 +142,13 @@ export default function App() {
     notify("Scheda eliminata");
   };
 
-  const handleExport = async () => {
+  const handleExport = async (mode) => {
     try {
-      const c = await exportBackup();
+      const c = await exportBackup(mode);
       notify(
-        c.method === "share"
+        c.method === "condividi"
           ? `Backup condiviso — ${c.plants} schede, ${c.photos} foto`
-          : `Backup salvato — ${c.plants} schede, ${c.photos} foto`
+          : `Backup salvato sul dispositivo — ${c.plants} schede, ${c.photos} foto`
       );
       refreshStorage();
     } catch (e) {

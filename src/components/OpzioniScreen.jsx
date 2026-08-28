@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Plus, Trash2, Download, Upload, ShieldCheck, ShieldAlert } from "lucide-react";
+import { Plus, Trash2, Download, Upload, ShieldCheck, ShieldAlert, Share2 } from "lucide-react";
 import {
   INK, PAPER, PAPER_DEEP, SEAL, BARK, MOSS, FONT_DISPLAY, FONT_BODY, PRESET_COLORS,
   APP_VERSION, CHANGELOG, fmtDate,
@@ -7,6 +7,7 @@ import {
 import { Seal, TopBar } from "./common.jsx";
 import { computeStats } from "../lib/stats.js";
 import { formatBytes } from "../lib/storage.js";
+import { canShareBackup } from "../lib/backup.js";
 
 export default function OpzioniScreen({
   tipoOptions, statoOptions, onSaveTipo, onSaveStato, onExport, onImport, version,
@@ -14,6 +15,7 @@ export default function OpzioniScreen({
 }) {
   const stats = computeStats(plants);
   const protetto = storage?.persisted === true;
+  const condivisibile = canShareBackup();
   const [newTipo, setNewTipo] = useState("");
   const [newStato, setNewStato] = useState("");
   const [newStatoColor, setNewStatoColor] = useState(PRESET_COLORS[0]);
@@ -130,11 +132,23 @@ export default function OpzioniScreen({
           Conservalo <b>fuori dal telefono</b> (Drive, mail, computer): è l’unica copia che
           sopravvive alla perdita del dispositivo.
         </div>
-        <div className="flex gap-2 mb-3">
-          <button onClick={onExport} className="flex-1 py-2.5 flex items-center justify-center gap-2" style={{ background: INK, color: PAPER, borderRadius: 4, fontFamily: FONT_BODY, fontSize: 12.5 }}>
-            <Download size={15} /> Esporta backup
+        {/* Due protezioni diverse, quindi due pulsanti distinti: il file sul
+            dispositivo sopravvive alla cancellazione dei dati del sito, la
+            copia condivisa sopravvive alla perdita del dispositivo. */}
+        <div className="flex gap-2 mb-2">
+          <button onClick={() => onExport("telefono")} className="flex-1 py-2.5 flex flex-col items-center justify-center gap-0.5" style={{ background: INK, color: PAPER, borderRadius: 4, fontFamily: FONT_BODY, fontSize: 12.5 }}>
+            <span className="flex items-center gap-2"><Download size={15} /> Salva sul dispositivo</span>
+            <span style={{ fontSize: 9.5, opacity: 0.7 }}>resta qui, nei file scaricati</span>
           </button>
-          <button onClick={() => fileRef.current?.click()} className="flex-1 py-2.5 flex items-center justify-center gap-2" style={{ border: `1px solid ${INK}`, color: INK, borderRadius: 4, fontFamily: FONT_BODY, fontSize: 12.5, background: "transparent" }}>
+          {condivisibile && (
+            <button onClick={() => onExport("condividi")} className="flex-1 py-2.5 flex flex-col items-center justify-center gap-0.5" style={{ background: MOSS, color: PAPER, borderRadius: 4, fontFamily: FONT_BODY, fontSize: 12.5 }}>
+              <span className="flex items-center gap-2"><Share2 size={15} /> Condividi</span>
+              <span style={{ fontSize: 9.5, opacity: 0.75 }}>Drive, mail, chat</span>
+            </button>
+          )}
+        </div>
+        <div className="flex gap-2 mb-3">
+          <button onClick={() => fileRef.current?.click()} className="flex-1 py-2 flex items-center justify-center gap-2" style={{ border: `1px solid ${INK}`, color: INK, borderRadius: 4, fontFamily: FONT_BODY, fontSize: 12.5, background: "transparent" }}>
             <Upload size={15} /> Importa backup
           </button>
           <input
