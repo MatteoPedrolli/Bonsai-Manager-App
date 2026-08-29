@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Plus, ImageIcon, ChevronRight, CalendarClock, Download, ShieldAlert } from "lucide-react";
+import { Plus, ImageIcon, ChevronRight, CalendarClock, Download, ShieldAlert, Cloud } from "lucide-react";
 import { db } from "../lib/db.js";
 import {
   INK, PAPER, PAPER_DEEP, SEAL, BARK, FONT_DISPLAY, FONT_BODY, colorForStato,
@@ -86,7 +86,10 @@ function FilterChips({ active, onSelect, statoOptions }) {
   );
 }
 
-export default function Home({ plants, planned, onOpen, onNew, statoOptions, onGoTo, backupStale, dataAtRisk }) {
+export default function Home({
+  plants, planned, onOpen, onNew, statoOptions, onGoTo, backupStale, dataAtRisk,
+  driveCollegato, onBackupDrive,
+}) {
   const [filter, setFilter] = useState("Tutte");
   const visible =
     filter === "Tutte" ? plants : (plants || []).filter((p) => (p.tags?.stato || []).includes(filter));
@@ -116,8 +119,16 @@ export default function Home({ plants, planned, onOpen, onNew, statoOptions, onG
             Il browser può cancellare i tuoi dati per liberare spazio. Salva un backup.
           </Banner>
         )}
+        {/* Con Drive collegato l'avviso diventa l'azione stessa: il salvataggio
+            richiede un tocco dell'utente, altrimenti il browser blocca la
+            finestra di Google. Un tocco qui vale il backup completo. */}
         {backupStale && (
-          <Banner tone="info" icon={Download} actionLabel="Backup ›" onClick={() => onGoTo?.("opzioni")}>
+          <Banner
+            tone="info"
+            icon={driveCollegato ? Cloud : Download}
+            actionLabel={driveCollegato ? "Salva su Drive ›" : "Backup ›"}
+            onClick={driveCollegato ? onBackupDrive : () => onGoTo?.("opzioni")}
+          >
             {backupStale === "never"
               ? "Non hai mai fatto un backup dei tuoi dati."
               : backupStale === "changes"

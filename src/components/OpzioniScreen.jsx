@@ -175,7 +175,7 @@ export default function OpzioniScreen({
               <>
                 <div style={{ fontFamily: FONT_BODY, fontSize: 11.5, color: BARK, marginBottom: 10 }}>
                   {drive.ultimo
-                    ? `Ultima copia su Drive: ${fmtDate(drive.ultimo)}. Si aggiorna da sola all’apertura dell’app, quando c’è qualcosa di nuovo da salvare.`
+                    ? `Ultima copia su Drive: ${fmtDate(drive.ultimo)}. Quando c’è qualcosa di nuovo da salvare l’app prova da sola; se il browser glielo impedisce, in Collezione trovi l’avviso con “Salva su Drive”.`
                     : "Collegato. La prima copia parte al prossimo salvataggio."}
                 </div>
                 <div className="flex gap-2">
@@ -186,13 +186,29 @@ export default function OpzioniScreen({
                     Scollega
                   </button>
                 </div>
+                {/* Onestà: "Scollega" ferma l'app su questo dispositivo, ma il
+                    permesso registrato su Google si toglie solo da lì. */}
+                <div style={{ fontFamily: FONT_BODY, fontSize: 10.5, color: BARK, marginTop: 8, lineHeight: 1.5 }}>
+                  “Scollega” ferma l’app su questo dispositivo. Per togliere del tutto
+                  il permesso a Google, vai su{" "}
+                  <a
+                    href="https://myaccount.google.com/connections"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: MOSS, textUnderlineOffset: 2 }}
+                  >
+                    Account Google → App collegate
+                  </a>
+                  . Il file di backup resta comunque nel tuo Drive: è tuo.
+                </div>
               </>
             ) : (
               <>
                 <div style={{ fontFamily: FONT_BODY, fontSize: 11.5, color: BARK, marginBottom: 10 }}>
-                  Collega il tuo Drive e la copia di sicurezza si salverà da sola, senza
-                  che tu debba ricordartene. L’app può vedere <b>solo il file che crea
-                  lei</b>: il resto del tuo Drive le resta invisibile.
+                  Collega il tuo Drive: la copia di sicurezza finisce lì con un tocco,
+                  quando l’app ti avvisa che c’è qualcosa di nuovo da salvare. Niente
+                  file da gestire. L’app può vedere <b>solo il file che crea lei</b>: il
+                  resto del tuo Drive le resta invisibile.
                 </div>
                 <button onClick={onCollegaDrive} className="w-full py-2.5 flex items-center justify-center gap-2" style={{ background: INK, color: PAPER, borderRadius: 4, fontFamily: FONT_BODY, fontSize: 12.5 }}>
                   <Cloud size={15} /> Collega Google Drive

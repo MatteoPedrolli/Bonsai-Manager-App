@@ -251,6 +251,8 @@ export default function App() {
           onGoTo={goToTab}
           backupStale={backupStale}
           dataAtRisk={dataAtRisk}
+          driveCollegato={drive.collegato}
+          onBackupDrive={handleBackupDrive}
         />
       )}
 
