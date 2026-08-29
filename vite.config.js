@@ -23,6 +23,11 @@ export default defineConfig({
       // dalla precache così l'installazione dell'app resta leggera.
       workbox: {
         globIgnores: ["**/heic2any-*.js"],
+        // Di default ogni navigazione viene servita con index.html (shell della
+        // SPA): senza questa eccezione chi ha l'app installata vedrebbe l'app
+        // al posto dell'informativa privacy, che deve restare raggiungibile
+        // come pagina vera (Google la controlla).
+        navigateFallbackDenylist: [/privacy\.html$/],
       },
       manifest: {
         name: "Bonsai Manager",

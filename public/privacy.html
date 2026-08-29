@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1B19" />
+    <title>Privacy — Bonsai Manager</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --ink: #1c1b19; --paper: #e6e2d6; --paper-deep: #dad5c6;
+        --bark: #8c7b65; --moss: #4a5d45; --seal: #b23a2f;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; padding: 0; background: var(--paper); color: var(--ink);
+        font-family: "IBM Plex Sans", sans-serif; line-height: 1.6;
+      }
+      header {
+        background: var(--ink); color: var(--paper);
+        padding: 20px 24px; display: flex; align-items: center; gap: 10px;
+      }
+      header .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--seal); flex-shrink: 0; }
+      header h1 { font-family: "Shippori Mincho", serif; font-size: 20px; letter-spacing: 1px; margin: 0; font-weight: 500; }
+      main { max-width: 680px; margin: 0 auto; padding: 28px 24px 64px; }
+      h2 { font-family: "Shippori Mincho", serif; font-size: 18px; margin: 30px 0 8px; font-weight: 500; }
+      h2:first-of-type { margin-top: 12px; }
+      p, li { font-size: 14.5px; }
+      ul { padding-left: 20px; }
+      li { margin-bottom: 6px; }
+      .lede {
+        background: var(--paper-deep); border-left: 3px solid var(--moss);
+        padding: 14px 16px; border-radius: 4px; margin-bottom: 8px;
+      }
+      .lede p { margin: 0; font-size: 15px; }
+      .meta { color: var(--bark); font-size: 12.5px; margin-top: 40px; border-top: 1px solid #8c7b6555; padding-top: 14px; }
+      a { color: var(--moss); }
+      strong { font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <span class="dot"></span>
+      <h1>Bonsai Manager — Privacy</h1>
+    </header>
+    <main>
+      <div class="lede">
+        <p>
+          Bonsai Manager non ha server. Tutto quello che scrivi resta
+          <strong>sul tuo dispositivo</strong>. Non raccogliamo nulla, non riceviamo
+          nulla, non possiamo vedere la tua collezione.
+        </p>
+      </div>
+
+      <h2>Quali dati tratta l'app</h2>
+      <p>
+        Schede delle piante, misure, note, storico degli interventi, pianificazioni e
+        fotografie. Questi dati vengono salvati esclusivamente nella memoria del browser
+        del dispositivo che stai usando (IndexedDB) e non vengono trasmessi ad alcun
+        server, nostro o di terzi.
+      </p>
+
+      <h2>Cosa NON facciamo</h2>
+      <ul>
+        <li>Nessun account e nessuna registrazione per usare l'app.</li>
+        <li>Nessuna statistica, nessun tracciamento, nessun cookie di profilazione.</li>
+        <li>Nessuna condivisione o vendita di dati a terzi.</li>
+        <li>Nessun accesso da parte degli autori dell'app ai tuoi contenuti.</li>
+      </ul>
+
+      <h2>Fotografie</h2>
+      <p>
+        Le foto che aggiungi vengono ridimensionate e salvate sul dispositivo. Non
+        lasciano mai il dispositivo, salvo quando sei tu a decidere di esportarle o
+        condividerle con la funzione di backup.
+      </p>
+
+      <h2>Backup</h2>
+      <p>
+        Il backup produce un file che contiene la tua collezione. Sei tu a scegliere dove
+        finisce: salvato sul dispositivo, condiviso con un'altra app, oppure — se attivi
+        il collegamento facoltativo descritto sotto — caricato sul tuo Google Drive.
+      </p>
+
+      <h2>Collegamento facoltativo a Google Drive</h2>
+      <p>
+        Puoi scegliere di collegare il tuo Google Drive perché l'app vi salvi
+        automaticamente una copia di backup. Questo collegamento è
+        <strong>facoltativo</strong>: l'app funziona completamente senza.
+      </p>
+      <ul>
+        <li>
+          L'app richiede il permesso <code>drive.file</code>, che consente di accedere
+          <strong>soltanto ai file creati dall'app stessa</strong>. Il resto del tuo Drive
+          non è accessibile all'app, nemmeno in lettura.
+        </li>
+        <li>
+          Il file di backup viene caricato nel <strong>tuo</strong> Drive, con il tuo
+          account. Gli autori dell'app non vi hanno accesso e non ne ricevono copia.
+        </li>
+        <li>
+          Non conserviamo le tue credenziali Google. L'autorizzazione è gestita da Google
+          e puoi revocarla in qualsiasi momento dalle impostazioni del tuo account Google,
+          alla voce delle app con accesso all'account.
+        </li>
+      </ul>
+
+      <h2>Conservazione e cancellazione</h2>
+      <p>
+        I dati restano sul dispositivo finché non li elimini tu, disinstalli l'app o
+        cancelli i dati del sito dal browser. Poiché non esiste una copia sui nostri
+        sistemi, <strong>una cancellazione è definitiva</strong>: per questo l'app
+        raccomanda di conservare backup.
+      </p>
+
+      <h2>Contatti</h2>
+      <p>
+        Per qualsiasi domanda su questa informativa puoi scrivere a
+        <a href="mailto:matteo.pedrolli@gmail.com">matteo.pedrolli@gmail.com</a>.
+      </p>
+
+      <p class="meta">
+        Bonsai Manager — applicazione per i soci della Scuola Trentina di Arte Bonsai.<br />
+        Ultimo aggiornamento: 29 agosto 2026.
+      </p>
+    </main>
+  </body>
+</html>
