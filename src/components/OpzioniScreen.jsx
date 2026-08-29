@@ -1,5 +1,8 @@
 import { useState, useRef } from "react";
-import { Plus, Trash2, Download, Upload, ShieldCheck, ShieldAlert, Share2, Cloud } from "lucide-react";
+import {
+  Plus, Trash2, Download, Upload, ShieldCheck, ShieldAlert, Share2, Cloud,
+  ChevronDown, ChevronUp,
+} from "lucide-react";
 import {
   INK, PAPER, PAPER_DEEP, SEAL, BARK, MOSS, FONT_DISPLAY, FONT_BODY, PRESET_COLORS,
   APP_VERSION, CHANGELOG, fmtDate,
@@ -21,6 +24,7 @@ export default function OpzioniScreen({
   const [newStato, setNewStato] = useState("");
   const [newStatoColor, setNewStatoColor] = useState(PRESET_COLORS[0]);
   const [importConfirm, setImportConfirm] = useState(null); // File in attesa di conferma
+  const [mostraTutteLeNovita, setMostraTutteLeNovita] = useState(false);
   const fileRef = useRef(null);
 
   const addTipo = () => {
@@ -293,8 +297,11 @@ export default function OpzioniScreen({
 
         {/* --- Changelog (spec §8) --- */}
         <div className="mt-8" style={sectionTitle}>Novità</div>
+        {/* In vista solo l'ultima versione: l'elenco completo cresce ad ogni
+            rilascio e sommergeva il resto delle Opzioni. Le precedenti restano
+            consultabili, ma su richiesta. */}
         <div className="mb-4">
-          {CHANGELOG.map((rel) => (
+          {(mostraTutteLeNovita ? CHANGELOG : CHANGELOG.slice(0, 1)).map((rel) => (
             <div key={rel.version} className="mb-3">
               <div className="flex items-baseline gap-2">
                 <span style={{ fontFamily: FONT_DISPLAY, fontSize: 14, color: INK }}>v{rel.version}</span>
@@ -307,6 +314,19 @@ export default function OpzioniScreen({
               </ul>
             </div>
           ))}
+
+          {CHANGELOG.length > 1 && (
+            <button
+              onClick={() => setMostraTutteLeNovita((v) => !v)}
+              className="flex items-center gap-1.5 py-1"
+              style={{ background: "transparent", border: "none", fontFamily: FONT_BODY, fontSize: 11.5, color: BARK }}
+            >
+              {mostraTutteLeNovita ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+              {mostraTutteLeNovita
+                ? "Nascondi le versioni precedenti"
+                : `Mostra le versioni precedenti (${CHANGELOG.length - 1})`}
+            </button>
+          )}
         </div>
 
         <div className="mt-6 text-center" style={{ fontFamily: FONT_BODY, fontSize: 11, color: BARK }}>
