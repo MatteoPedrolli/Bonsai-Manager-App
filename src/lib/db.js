@@ -51,74 +51,22 @@ db.version(2).stores({
 // -----------------------------------------------------------------------------
 //  SEED alla prima creazione del DB (gira una sola volta per dispositivo)
 // -----------------------------------------------------------------------------
+//  Solo le opzioni dei tag. NIENTE piante di esempio: chi installa l'app parte
+//  dalla collezione vuota e aggiunge le sue. Le tre schede dimostrative
+//  (Kentaro, Hana, Ryu) sono state rimosse il 29 ago 2026.
+//
+//  Nota: questo blocco gira solo su database NUOVI. Sui dispositivi dove l'app
+//  è già installata le tre schede restano, e vanno eliminate a mano: cancellarle
+//  da qui sarebbe un'operazione distruttiva sui dati di qualcun altro, e c'è chi
+//  potrebbe averle rinominate e usate come schede vere.
+// -----------------------------------------------------------------------------
 db.on("populate", async (tx) => {
   await tx.table("meta").bulkPut([
     { key: "tipoOptions", value: DEFAULT_TIPO_OPTIONS },
     { key: "statoOptions", value: DEFAULT_STATO_OPTIONS },
     { key: "schemaVersion", value: 2 },
   ]);
-  await tx.table("plants").bulkAdd(seedPlants());
 });
-
-function nowISO() {
-  return new Date().toISOString();
-}
-
-// Piante di esempio (dal prototipo) per mostrare l'app popolata al primo avvio.
-// Il socio può eliminarle. Vengono inserite solo su DB nuovo.
-function seedPlants() {
-  const base = (p) => ({ ...p, createdAt: nowISO(), updatedAt: nowISO(), foto: [] });
-  return [
-    base({
-      nome: "Kentaro",
-      specie: "Juniperus procumbens",
-      provenienza: "Vivaio Trentino",
-      dataIngresso: "2021-04-12",
-      altezza: 38, profondita: 22, larghezza: 30,
-      tags: { tipo: "Sempreverde", stato: ["in mantenimento"] },
-      note: "Esposizione sud, ombreggiare nelle ore centrali in estate.",
-      ultimaConcimazione: "2026-06-01",
-      ultimoRinvaso: "2024-03-10",
-      ultimaLavorazione: "2026-05-15",
-      storico: [
-        { data: "2026-06-01", tipo: "Concimazione", note: "Concime organico a lento rilascio" },
-        { data: "2026-05-15", tipo: "Impostazione", note: "Rimodellata chioma superiore" },
-        { data: "2024-03-10", tipo: "Rinvaso", note: "Cambio contenitore, radici sane" },
-      ],
-    }),
-    base({
-      nome: "Hana",
-      specie: "Acer palmatum",
-      provenienza: "Raccolta 2019",
-      dataIngresso: "2019-09-03",
-      altezza: 45, profondita: 25, larghezza: 34,
-      tags: { tipo: "Caducifoglia", stato: ["malata"] },
-      note: "",
-      ultimaConcimazione: "2026-04-20",
-      ultimoRinvaso: "2025-03-01",
-      ultimaLavorazione: "2026-04-20",
-      storico: [
-        { data: "2026-04-20", tipo: "Altro", note: "Fungicida su foglie ingiallite" },
-      ],
-    }),
-    base({
-      nome: "Ryu",
-      specie: "Pinus thunbergii",
-      provenienza: "Scambio soci",
-      dataIngresso: "2022-01-20",
-      altezza: 52, profondita: 30, larghezza: 40,
-      tags: { tipo: "Conifera", stato: ["in formazione", "presenza di filo"] },
-      note: "",
-      ultimaConcimazione: "2026-05-28",
-      ultimoRinvaso: "2023-02-14",
-      ultimaLavorazione: "2026-06-10",
-      storico: [
-        { data: "2026-06-10", tipo: "Impostazione", note: "Legatura branca principale" },
-        { data: "2026-05-28", tipo: "Concimazione", note: "Concime minerale" },
-      ],
-    }),
-  ];
-}
 
 // -----------------------------------------------------------------------------
 //  Helper meta (key/value)
