@@ -11,7 +11,7 @@ import {
   isDriveConfigured, collegaDrive, scollegaDrive, backupSuDrive,
   backupSuDriveSePossibile, precaricaGis, DriveNonAutorizzato,
 } from "./lib/driveBackup.js";
-import { dueSummary } from "./lib/reminders.js";
+import { dueSummary, aggiornaBadge } from "./lib/reminders.js";
 import { TabBar, Toast } from "./components/common.jsx";
 import Home from "./components/Home.jsx";
 import PlantDetail from "./components/PlantDetail.jsx";
@@ -109,6 +109,10 @@ export default function App() {
   // La libreria di Google va caricata PRIMA che l'utente tocchi il pulsante:
   // aspettarla dentro il clic consuma il gesto, e il browser blocca la finestra.
   useEffect(() => { precaricaGis(); }, []);
+
+  // Il pallino sull'icona segue gli interventi in scadenza e resta lì anche a
+  // app chiusa: è il promemoria che si vede senza aprire nulla.
+  useEffect(() => { aggiornaBadge(due.due); }, [due.due]);
 
   const notify = useCallback((msg) => setToast(msg), []);
 

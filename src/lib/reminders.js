@@ -36,6 +36,22 @@ export function dueSummary(planned, soonDays = 7) {
   return { overdue, soon, due: overdue + soon, total: (planned || []).length };
 }
 
+// Pallino col numero sull'icona dell'app nella schermata home.
+// Perché questo e non una notifica: resta visibile anche ad app chiusa, non
+// chiede permessi, non interrompe, e non obbliga a mettere le mani nel service
+// worker — che è il componente da cui dipende l'app di tutti i soci.
+// Dove non è supportato (browser non installato, iOS senza permesso) non
+// succede nulla: è un di più, non un meccanismo su cui contare.
+export async function aggiornaBadge(quanti) {
+  if (typeof navigator === "undefined" || !("setAppBadge" in navigator)) return;
+  try {
+    if (quanti > 0) await navigator.setAppBadge(quanti);
+    else await navigator.clearAppBadge();
+  } catch {
+    /* su alcune piattaforme richiede il permesso notifiche: se manca, pazienza */
+  }
+}
+
 export function reminderLabel(item) {
   const d = daysUntil(item.data);
   if (d < 0) return `in ritardo di ${Math.abs(d)} ${Math.abs(d) === 1 ? "giorno" : "giorni"}`;
