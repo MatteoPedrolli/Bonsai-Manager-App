@@ -169,16 +169,19 @@ async function driveFetch(url, opts, token) {
 
 // Cerca il file di backup già creato dall'app. Con l'ambito drive.file questa
 // ricerca vede SOLO i file dell'app, non il Drive del socio.
+// Ordinata per data di creazione: se per qualche motivo esistono più copie si
+// tiene sempre la stessa (la più vecchia), invece di alternarle a caso.
 async function cercaFileEsistente(token) {
   const q = encodeURIComponent(`name = '${NOME_FILE}' and trashed = false`);
   const res = await driveFetch(
-    `https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id,name)&pageSize=1`,
+    `https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id)&orderBy=createdTime&pageSize=10`,
     { method: "GET" },
     token
   );
-  if (!res.ok) return null;
+  if (!res.ok) return { id: null, quanti: 0 };
   const data = await res.json();
-  return data.files?.[0]?.id || null;
+  const files = data.files || [];
+  return { id: files[0]?.id || null, quanti: files.length };
 }
 
 async function aggiornaFile(fileId, blob, token) {
@@ -214,16 +217,29 @@ async function creaFile(blob, token) {
   return (await res.json()).id;
 }
 
+// Due caricamenti avviati insieme (per esempio il salvataggio subito dopo il
+// collegamento e il tentativo automatico all'apertura) cercherebbero entrambi
+// il file prima che l'altro l'abbia creato, e ne creerebbero due. Chi arriva
+// mentre un caricamento è in corso aspetta quello, non ne avvia un secondo.
+let inCorso = null;
+
+export async function backupSuDrive() {
+  if (inCorso) return inCorso;
+  inCorso = eseguiBackupSuDrive().finally(() => { inCorso = null; });
+  return inCorso;
+}
+
 // Salva la collezione su Drive. Ritorna i conteggi del backup.
 // Lancia DriveNonAutorizzato se il consenso non è (più) disponibile: chi chiama
 // decide se mostrare un pulsante o restare in silenzio.
-export async function backupSuDrive() {
+async function eseguiBackupSuDrive() {
   if (!isDriveConfigured()) throw new Error("Google Drive non configurato.");
   const token = await getToken();
   const { blob, counts } = await buildBackup();
 
   const stato = await statoDrive();
   let fileId = stato.fileId;
+  let quanti = 1;
 
   // Se l'id manca (o il file non c'è più) si cerca prima di crearne un altro:
   // evita di riempire il Drive del socio di duplicati, per esempio dopo che i
@@ -231,7 +247,8 @@ export async function backupSuDrive() {
   if (fileId) fileId = await aggiornaFile(fileId, blob, token);
   if (!fileId) {
     const trovato = await cercaFileEsistente(token);
-    fileId = trovato ? await aggiornaFile(trovato, blob, token) : null;
+    quanti = trovato.quanti;
+    fileId = trovato.id ? await aggiornaFile(trovato.id, blob, token) : null;
   }
   if (!fileId) fileId = await creaFile(blob, token);
 
@@ -244,7 +261,9 @@ export async function backupSuDrive() {
     // l'avviso "hai modifiche non salvate".
     setMeta("lastBackupAt", adesso),
   ]);
-  return counts;
+  // `duplicati` serve solo a segnalarlo all'utente: cancellare file dal Drive
+  // di qualcun altro non è una decisione che spetta all'app.
+  return { ...counts, duplicati: quanti > 1 ? quanti : 0 };
 }
 
 // Tentativo silenzioso all'apertura dell'app: se il consenso non è più valido

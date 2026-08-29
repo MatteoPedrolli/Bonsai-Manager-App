@@ -191,10 +191,17 @@ export default function App() {
   };
 
   const handleCollegaDrive = async () => {
+    // Il salvataggio lo facciamo qui: l'effetto automatico non deve partire
+    // anche lui appena `driveCollegato` diventa vero.
+    driveTentato.current = true;
     try {
       await collegaDrive();
       const c = await backupSuDrive();
-      notify(`Drive collegato — ${c.plants} schede, ${c.photos} foto salvate`);
+      notify(
+        c.duplicati
+          ? `Drive collegato — attenzione: ci sono ${c.duplicati} copie del backup, tienine una`
+          : `Drive collegato — ${c.plants} schede, ${c.photos} foto salvate`
+      );
     } catch (e) {
       if (e instanceof DriveNonAutorizzato) return notify("Collegamento annullato");
       console.error(e);
@@ -205,7 +212,11 @@ export default function App() {
   const handleBackupDrive = async () => {
     try {
       const c = await backupSuDrive();
-      notify(`Copia aggiornata su Drive — ${c.plants} schede, ${c.photos} foto`);
+      notify(
+        c.duplicati
+          ? `Aggiornata — attenzione: su Drive ci sono ${c.duplicati} copie, tienine una`
+          : `Copia aggiornata su Drive — ${c.plants} schede, ${c.photos} foto`
+      );
     } catch (e) {
       if (e instanceof DriveNonAutorizzato) return notify("Serve di nuovo l’autorizzazione Google");
       console.error(e);
