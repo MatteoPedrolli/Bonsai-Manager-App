@@ -59,9 +59,8 @@ function loadScript(src) {
   });
 }
 
-async function ensureTokenClient() {
-  await loadScript("https://accounts.google.com/gsi/client");
-  if (!tokenClient) {
+function creaClient() {
+  if (!tokenClient && window.google?.accounts?.oauth2) {
     tokenClient = window.google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
       scope: SCOPE,
@@ -71,6 +70,26 @@ async function ensureTokenClient() {
   return tokenClient;
 }
 
+// Va chiamata all'avvio. Motivo: la finestra di Google può aprirsi solo se la
+// richiesta parte DENTRO il gesto dell'utente. Aspettare qui il caricamento
+// della libreria consumerebbe quel gesto, e il browser bloccherebbe la
+// finestra — con l'utente che vede "annullato" senza aver annullato niente.
+export async function precaricaGis() {
+  if (!isDriveConfigured()) return;
+  try {
+    await loadScript("https://accounts.google.com/gsi/client");
+    creaClient();
+  } catch {
+    /* senza rete si riproverà al momento del clic */
+  }
+}
+
+async function ensureTokenClient() {
+  if (tokenClient) return tokenClient;
+  await loadScript("https://accounts.google.com/gsi/client");
+  return creaClient();
+}
+
 function tokenValido() {
   return tokenCorrente && tokenCorrente.scadeIl - 60000 > Date.now();
 }
@@ -78,19 +97,34 @@ function tokenValido() {
 // Chiede un access token. Con prompt "" Google non mostra nulla se il consenso
 // è già stato dato e la sessione è attiva; altrimenti apre la finestra, e per
 // questo va chiamata da un gesto dell'utente (altrimenti il popup è bloccato).
+// Traduce i codici di Google in qualcosa di azionabile: "annullato" detto a chi
+// non ha annullato nulla manda solo fuori strada.
+function spiegaErrore(codice) {
+  const c = String(codice || "");
+  if (c.includes("popup_failed_to_open")) return "Il browser ha bloccato la finestra di Google. Tocca di nuovo.";
+  if (c.includes("popup_closed")) return "Finestra di Google chiusa prima di concedere l’accesso.";
+  if (c.includes("access_denied")) return "Accesso a Drive non concesso.";
+  if (c.includes("permesso di Drive")) return "Hai lasciato disattivata la spunta di Drive: senza quella l’app non può salvare.";
+  return c ? `Autorizzazione non riuscita (${c})` : "Autorizzazione non riuscita.";
+}
+
 async function richiediToken() {
-  const client = await ensureTokenClient();
+  // Il client di norma è già pronto (precaricaGis all'avvio): così la richiesta
+  // parte nello stesso gesto del clic e la finestra non viene bloccata.
+  const client = tokenClient || (await ensureTokenClient());
   return new Promise((resolve, reject) => {
     client.callback = (resp) => {
       if (resp.error || !resp.access_token) {
-        return reject(new DriveNonAutorizzato(resp.error_description || resp.error));
+        return reject(new DriveNonAutorizzato(spiegaErrore(resp.error_description || resp.error)));
       }
       // Consenso granulare: si può accedere con Google lasciando però la
       // spunta di Drive disattivata. Senza questo controllo il collegamento
       // risulterebbe riuscito e poi ogni salvataggio fallirebbe con un 403.
-      const ok = window.google?.accounts?.oauth2?.hasGrantedAllScopes?.(resp, SCOPE);
-      if (ok === false) {
-        return reject(new DriveNonAutorizzato("permesso di Drive non concesso"));
+      // Si controlla la stringa `scope` della risposta, che è il dato di fatto.
+      // (hasGrantedAllScopes di Google, su alcune versioni, dà falsi negativi.)
+      const concessi = String(resp.scope || "").split(/\s+/);
+      if (resp.scope && !concessi.includes(SCOPE)) {
+        return reject(new DriveNonAutorizzato(spiegaErrore("permesso di Drive")));
       }
       tokenCorrente = {
         value: resp.access_token,
@@ -99,12 +133,12 @@ async function richiediToken() {
       resolve(tokenCorrente.value);
     };
     client.error_callback = (err) => {
-      reject(new DriveNonAutorizzato(err?.type || "popup non disponibile"));
+      reject(new DriveNonAutorizzato(spiegaErrore(err?.type)));
     };
     try {
       client.requestAccessToken({ prompt: "" });
     } catch (e) {
-      reject(new DriveNonAutorizzato(e.message));
+      reject(new DriveNonAutorizzato(spiegaErrore(e.message)));
     }
   });
 }

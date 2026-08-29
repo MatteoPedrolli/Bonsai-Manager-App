@@ -9,7 +9,7 @@ import { exportBackup, importBackup, BackupAnnullato } from "./lib/backup.js";
 import { ensurePersisted, storageEstimate } from "./lib/storage.js";
 import {
   isDriveConfigured, collegaDrive, scollegaDrive, backupSuDrive,
-  backupSuDriveSePossibile, DriveNonAutorizzato,
+  backupSuDriveSePossibile, precaricaGis, DriveNonAutorizzato,
 } from "./lib/driveBackup.js";
 import { dueSummary } from "./lib/reminders.js";
 import { TabBar, Toast } from "./components/common.jsx";
@@ -105,6 +105,10 @@ export default function App() {
   const drive = { configurato: isDriveConfigured(), ...driveMeta };
 
   const driveTentato = useRef(false);
+
+  // La libreria di Google va caricata PRIMA che l'utente tocchi il pulsante:
+  // aspettarla dentro il clic consuma il gesto, e il browser blocca la finestra.
+  useEffect(() => { precaricaGis(); }, []);
 
   const notify = useCallback((msg) => setToast(msg), []);
 
@@ -203,7 +207,7 @@ export default function App() {
           : `Drive collegato — ${c.plants} schede, ${c.photos} foto salvate`
       );
     } catch (e) {
-      if (e instanceof DriveNonAutorizzato) return notify("Collegamento annullato");
+      if (e instanceof DriveNonAutorizzato) return notify(e.message);
       console.error(e);
       notify("Errore nel collegamento a Drive");
     }
@@ -218,7 +222,7 @@ export default function App() {
           : `Copia aggiornata su Drive — ${c.plants} schede, ${c.photos} foto`
       );
     } catch (e) {
-      if (e instanceof DriveNonAutorizzato) return notify("Serve di nuovo l’autorizzazione Google");
+      if (e instanceof DriveNonAutorizzato) return notify(e.message);
       console.error(e);
       notify("Errore nel salvataggio su Drive");
     }
