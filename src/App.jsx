@@ -7,6 +7,10 @@ import {
 import * as repo from "./lib/repo.js";
 import { exportBackup, importBackup, BackupAnnullato } from "./lib/backup.js";
 import { ensurePersisted, storageEstimate } from "./lib/storage.js";
+import {
+  isDriveConfigured, collegaDrive, scollegaDrive, backupSuDrive,
+  backupSuDriveSePossibile, DriveNonAutorizzato,
+} from "./lib/driveBackup.js";
 import { dueSummary } from "./lib/reminders.js";
 import { TabBar, Toast } from "./components/common.jsx";
 import Home from "./components/Home.jsx";
@@ -86,7 +90,35 @@ export default function App() {
   // Avviso forte: i dati non sono protetti E non c'è una copia recente.
   const dataAtRisk = storage.checked && !storage.persisted && hasData;
 
+  // --- Copia su Google Drive (facoltativa) -----------------------------------
+  const driveMeta = useLiveQuery(
+    async () => {
+      const [c, u] = await Promise.all([
+        db.meta.get("driveCollegato"),
+        db.meta.get("lastDriveBackupAt"),
+      ]);
+      return { collegato: Boolean(c?.value), ultimo: u?.value || null };
+    },
+    [],
+    { collegato: false, ultimo: null }
+  );
+  const drive = { configurato: isDriveConfigured(), ...driveMeta };
+
+  const driveTentato = useRef(false);
+
   const notify = useCallback((msg) => setToast(msg), []);
+
+  // Tentativo silenzioso all'apertura, una sola volta per sessione: se c'è da
+  // salvare e il consenso è ancora valido, la copia parte senza chiedere nulla.
+  // Se non è valido non si insiste: in Opzioni resta il pulsante.
+  // (Va dopo `notify`: la dipendenza viene letta durante il render.)
+  useEffect(() => {
+    if (driveTentato.current || !drive.collegato || !hasData || !backupStale) return;
+    driveTentato.current = true;
+    backupSuDriveSePossibile().then((c) => {
+      if (c) notify(`Copia salvata su Drive — ${c.plants} schede, ${c.photos} foto`);
+    });
+  }, [drive.collegato, hasData, backupStale, notify]);
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(""), 2400);
@@ -158,6 +190,34 @@ export default function App() {
     }
   };
 
+  const handleCollegaDrive = async () => {
+    try {
+      await collegaDrive();
+      const c = await backupSuDrive();
+      notify(`Drive collegato — ${c.plants} schede, ${c.photos} foto salvate`);
+    } catch (e) {
+      if (e instanceof DriveNonAutorizzato) return notify("Collegamento annullato");
+      console.error(e);
+      notify("Errore nel collegamento a Drive");
+    }
+  };
+
+  const handleBackupDrive = async () => {
+    try {
+      const c = await backupSuDrive();
+      notify(`Copia aggiornata su Drive — ${c.plants} schede, ${c.photos} foto`);
+    } catch (e) {
+      if (e instanceof DriveNonAutorizzato) return notify("Serve di nuovo l’autorizzazione Google");
+      console.error(e);
+      notify("Errore nel salvataggio su Drive");
+    }
+  };
+
+  const handleScollegaDrive = async () => {
+    await scollegaDrive();
+    notify("Google Drive scollegato");
+  };
+
   const handleImport = async (file) => {
     try {
       const c = await importBackup(file);
@@ -217,6 +277,10 @@ export default function App() {
           lastBackupAt={lastBackupAt}
           storage={storage}
           hasUnsavedChanges={backupStale === "changes" || backupStale === "never"}
+          drive={drive}
+          onCollegaDrive={handleCollegaDrive}
+          onBackupDrive={handleBackupDrive}
+          onScollegaDrive={handleScollegaDrive}
         />
       )}
 

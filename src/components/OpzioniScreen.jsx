@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Plus, Trash2, Download, Upload, ShieldCheck, ShieldAlert, Share2 } from "lucide-react";
+import { Plus, Trash2, Download, Upload, ShieldCheck, ShieldAlert, Share2, Cloud } from "lucide-react";
 import {
   INK, PAPER, PAPER_DEEP, SEAL, BARK, MOSS, FONT_DISPLAY, FONT_BODY, PRESET_COLORS,
   APP_VERSION, CHANGELOG, fmtDate,
@@ -12,6 +12,7 @@ import { canShareBackup } from "../lib/backup.js";
 export default function OpzioniScreen({
   tipoOptions, statoOptions, onSaveTipo, onSaveStato, onExport, onImport, version,
   plants, lastBackupAt, storage, hasUnsavedChanges,
+  drive, onCollegaDrive, onBackupDrive, onScollegaDrive,
 }) {
   const stats = computeStats(plants);
   const protetto = storage?.persisted === true;
@@ -159,6 +160,47 @@ export default function OpzioniScreen({
             onChange={(e) => { const f = e.target.files?.[0]; if (f) setImportConfirm(f); e.target.value = ""; }}
           />
         </div>
+
+        {/* --- Copia automatica su Google Drive (facoltativa) --- */}
+        {drive?.configurato && (
+          <div className="p-3 mb-3" style={{ background: PAPER_DEEP, borderRadius: 6 }}>
+            <div className="flex items-center gap-2 mb-1">
+              <Cloud size={16} color={drive.collegato ? MOSS : BARK} />
+              <span style={{ fontFamily: FONT_BODY, fontSize: 12.5, color: INK, fontWeight: 600 }}>
+                Copia automatica su Google Drive
+              </span>
+            </div>
+
+            {drive.collegato ? (
+              <>
+                <div style={{ fontFamily: FONT_BODY, fontSize: 11.5, color: BARK, marginBottom: 10 }}>
+                  {drive.ultimo
+                    ? `Ultima copia su Drive: ${fmtDate(drive.ultimo)}. Si aggiorna da sola all’apertura dell’app, quando c’è qualcosa di nuovo da salvare.`
+                    : "Collegato. La prima copia parte al prossimo salvataggio."}
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={onBackupDrive} className="flex-1 py-2 flex items-center justify-center gap-2" style={{ background: MOSS, color: PAPER, borderRadius: 4, fontFamily: FONT_BODY, fontSize: 12 }}>
+                    <Cloud size={14} /> Salva ora su Drive
+                  </button>
+                  <button onClick={onScollegaDrive} className="py-2 px-3" style={{ border: `1px solid ${BARK}`, color: INK, borderRadius: 4, fontFamily: FONT_BODY, fontSize: 12, background: "transparent" }}>
+                    Scollega
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontFamily: FONT_BODY, fontSize: 11.5, color: BARK, marginBottom: 10 }}>
+                  Collega il tuo Drive e la copia di sicurezza si salverà da sola, senza
+                  che tu debba ricordartene. L’app può vedere <b>solo il file che crea
+                  lei</b>: il resto del tuo Drive le resta invisibile.
+                </div>
+                <button onClick={onCollegaDrive} className="w-full py-2.5 flex items-center justify-center gap-2" style={{ background: INK, color: PAPER, borderRadius: 4, fontFamily: FONT_BODY, fontSize: 12.5 }}>
+                  <Cloud size={15} /> Collega Google Drive
+                </button>
+              </>
+            )}
+          </div>
+        )}
 
         {importConfirm && (
           <div className="p-3 mb-6" style={{ border: `1px solid ${SEAL}`, borderRadius: 4, background: `${SEAL}12` }}>

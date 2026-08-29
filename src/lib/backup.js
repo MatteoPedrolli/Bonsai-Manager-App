@@ -38,7 +38,10 @@ export function canShareBackup() {
 // sito" e quindi sopravvive alla cancellazione automatica della collezione).
 // mode "condividi": apre il foglio di sistema per mandarlo su Drive/mail/chat,
 // cioè fuori dal dispositivo. Sono due protezioni diverse e servono entrambe.
-export async function exportBackup(mode = "telefono") {
+// Costruisce il file di backup. Usata sia dall'export manuale sia dal
+// caricamento su Drive: il contenuto deve restare identico nei due casi,
+// altrimenti un ripristino da Drive non sarebbe equivalente a uno da file.
+export async function buildBackup() {
   const [plants, planned, meta, photoRows] = await Promise.all([
     db.plants.toArray(),
     db.planned.toArray(),
@@ -70,7 +73,11 @@ export async function exportBackup(mode = "telefono") {
 
   const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
   const stamp = new Date().toISOString().slice(0, 10);
-  const filename = `stab-bonsai-backup_${stamp}.json`;
+  return { blob, filename: `stab-bonsai-backup_${stamp}.json`, counts: payload.counts };
+}
+
+export async function exportBackup(mode = "telefono") {
+  const { blob, filename, counts } = await buildBackup();
 
   // Se la condivisione non è disponibile si ricade sul download: meglio un
   // backup nel posto sbagliato che nessun backup.
@@ -80,7 +87,7 @@ export async function exportBackup(mode = "telefono") {
       : download(blob, filename);
 
   await setMeta("lastBackupAt", new Date().toISOString());
-  return { ...payload.counts, method };
+  return { ...counts, method };
 }
 
 // Errore usato quando il socio chiude il foglio di condivisione: il backup
