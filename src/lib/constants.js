@@ -15,10 +15,20 @@ export const FONT_DISPLAY = "'Shippori Mincho', serif";
 export const FONT_BODY = "'IBM Plex Sans', sans-serif";
 
 // Versione app, mostrata in Opzioni (spec §8).
-export const APP_VERSION = "0.7.1";
+export const APP_VERSION = "0.8.0";
 
 // Changelog visibile in app (spec §8). Più recente in cima.
 export const CHANGELOG = [
+  {
+    version: "0.8.0",
+    date: "2026-08-29",
+    items: [
+      "Copia di sicurezza su Google Drive, facoltativa: si collega una volta sola",
+      "L’app vede solo il file di backup che crea lei, il resto del tuo Drive le è invisibile",
+      "Con Drive collegato l’avviso in Collezione diventa il pulsante “Salva su Drive”",
+      "Il file su Drive è sempre lo stesso, aggiornato: niente copie a ripetizione",
+    ],
+  },
   {
     version: "0.7.1",
     date: "2026-08-28",
