@@ -87,9 +87,16 @@ export async function applyIntervento({ target, riferimento, tipoDef, detail, da
         storico,
         updatedAt: now(),
       };
-      if (tipoDef.key === "concimazione") patch.ultimaConcimazione = when;
-      else if (tipoDef.key === "rinvaso") patch.ultimoRinvaso = when;
-      else patch.ultimaLavorazione = when;
+      // Da quando gli interventi si possono retrodatare, queste date non si
+      // aggiornano più alla cieca: registrare oggi una concimazione fatta un
+      // mese fa non deve far arretrare "ultima concimazione", che diventerebbe
+      // un'informazione falsa. Si tiene sempre la più recente.
+      // (Date in formato "AAAA-MM-GG": il confronto fra stringhe è corretto.)
+      const piuRecente = (attuale, nuova) => (!attuale || nuova > attuale ? nuova : attuale);
+
+      if (tipoDef.key === "concimazione") patch.ultimaConcimazione = piuRecente(p.ultimaConcimazione, when);
+      else if (tipoDef.key === "rinvaso") patch.ultimoRinvaso = piuRecente(p.ultimoRinvaso, when);
+      else patch.ultimaLavorazione = piuRecente(p.ultimaLavorazione, when);
 
       await db.plants.update(p.id, patch);
     }

@@ -15,10 +15,19 @@ export const FONT_DISPLAY = "'Shippori Mincho', serif";
 export const FONT_BODY = "'IBM Plex Sans', sans-serif";
 
 // Versione app, mostrata in Opzioni (spec §8).
-export const APP_VERSION = "0.8.1";
+export const APP_VERSION = "0.9.0";
 
 // Changelog visibile in app (spec §8). Più recente in cima.
 export const CHANGELOG = [
+  {
+    version: "0.9.0",
+    date: "2026-08-31",
+    items: [
+      "Gli interventi si registrano con la data in cui li hai fatti davvero, non per forza oggi",
+      "La data parte da oggi: se l'intervento è di oggi non devi toccare nulla",
+      "Registrare un intervento vecchio non fa più arretrare le date di riepilogo della scheda",
+    ],
+  },
   {
     version: "0.8.1",
     date: "2026-08-29",

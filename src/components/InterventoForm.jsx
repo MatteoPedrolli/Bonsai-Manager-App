@@ -8,12 +8,16 @@ import { countMatches } from "../lib/repo.js";
 
 // Selettore target (scheda/tag/tutte) + tipo con campo di dettaglio.
 // Condiviso tra "Nuovo intervento" (subito) e "Pianifica intervento" (data futura).
-function InterventoForm({ plants, tipoOptions, statoOptions, includeDate, onSubmit, submitLabel }) {
+// La data è sempre modificabile. Cambia solo il senso: per un intervento
+// appena fatto parte da oggi e si può retrodatare (l'ho fatto domenica scorsa);
+// per una pianificazione va scelta, perché una data "di default" nel futuro non
+// esiste.
+function InterventoForm({ plants, tipoOptions, statoOptions, dateLabel, defaultData = "", onSubmit, submitLabel }) {
   const [target, setTarget] = useState("scheda");
   const [riferimento, setRiferimento] = useState("");
   const [tipoKey, setTipoKey] = useState(INTERVENTIONS[0].key);
   const [detail, setDetail] = useState("");
-  const [data, setData] = useState(includeDate ? "" : todayISO());
+  const [data, setData] = useState(defaultData);
   const [error, setError] = useState("");
 
   const tipoDef = INTERVENTIONS.find((i) => i.key === tipoKey);
@@ -25,9 +29,9 @@ function InterventoForm({ plants, tipoOptions, statoOptions, includeDate, onSubm
   const handleSubmit = () => {
     if (target === "scheda" && !riferimento) return setError("Seleziona una pianta.");
     if (target === "tag" && !riferimento) return setError("Seleziona un tag.");
-    if (includeDate && !data) return setError("Indica la data prevista.");
+    if (!data) return setError("Indica una data.");
     setError("");
-    onSubmit({ target, riferimento, tipoDef, detail, data: data || todayISO() });
+    onSubmit({ target, riferimento, tipoDef, detail, data });
   };
 
   const inputStyle = { border: `1px solid ${BARK}88`, borderRadius: 4, fontFamily: FONT_BODY, fontSize: 13, background: "white" };
@@ -146,12 +150,10 @@ function InterventoForm({ plants, tipoOptions, statoOptions, includeDate, onSubm
         </div>
       )}
 
-      {includeDate && (
-        <div className="mb-4">
-          <label style={{ fontFamily: FONT_BODY, fontSize: 11, color: BARK }}>Data prevista</label>
-          <input type="date" value={data} onChange={(e) => setData(e.target.value)} className="w-full p-2 mt-1" style={inputStyle} />
-        </div>
-      )}
+      <div className="mb-4">
+        <label style={{ fontFamily: FONT_BODY, fontSize: 11, color: BARK }}>{dateLabel}</label>
+        <input type="date" value={data} onChange={(e) => setData(e.target.value)} className="w-full p-2 mt-1" style={inputStyle} />
+      </div>
 
       {error && (
         <div className="mb-3" style={{ fontFamily: FONT_BODY, fontSize: 12, color: SEAL }}>{error}</div>
@@ -191,7 +193,8 @@ export function NewInterventoModal({ onClose, onSubmit, plants, tipoOptions, sta
     <Sheet title="Nuovo intervento" onClose={onClose}>
       <InterventoForm
         plants={plants} tipoOptions={tipoOptions} statoOptions={statoOptions}
-        includeDate={false} submitLabel="Registra intervento"
+        dateLabel="Data dell'intervento" defaultData={todayISO()}
+        submitLabel="Registra intervento"
         onSubmit={(payload) => { onSubmit(payload); onClose(); }}
       />
     </Sheet>
@@ -203,7 +206,8 @@ export function PianificaModal({ onClose, onSave, plants, tipoOptions, statoOpti
     <Sheet title="Pianifica intervento" onClose={onClose}>
       <InterventoForm
         plants={plants} tipoOptions={tipoOptions} statoOptions={statoOptions}
-        includeDate={true} submitLabel="Salva pianificazione"
+        dateLabel="Data prevista" defaultData=""
+        submitLabel="Salva pianificazione"
         onSubmit={({ target, riferimento, tipoDef, data }) => {
           let targetLabel = "Tutte le piante";
           if (target === "scheda") {
