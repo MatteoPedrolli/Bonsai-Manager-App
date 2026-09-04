@@ -15,10 +15,17 @@ export const FONT_DISPLAY = "'Shippori Mincho', serif";
 export const FONT_BODY = "'IBM Plex Sans', sans-serif";
 
 // Versione app, mostrata in Opzioni (spec §8).
-export const APP_VERSION = "0.9.2";
+export const APP_VERSION = "0.9.3";
 
 // Changelog visibile in app (spec §8). Più recente in cima.
 export const CHANGELOG = [
+  {
+    version: "0.9.3",
+    date: "2026-09-04",
+    items: [
+      "Corretto: con foto molto alte, didascalia e data finivano sotto il bordo dello schermo e sembravano impossibili da modificare",
+    ],
+  },
   {
     version: "0.9.2",
     date: "2026-09-04",

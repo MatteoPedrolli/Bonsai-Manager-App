@@ -328,7 +328,10 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify }) {
       onTouchEnd={onTouchEnd}
     >
       {/* Barra superiore: contatore + chiudi */}
-      <div className="flex items-center justify-between px-4 py-3" style={{ paddingTop: "calc(env(safe-area-inset-top) + 12px)" }}>
+      <div
+        className="flex items-center justify-between px-4 py-3"
+        style={{ flexShrink: 0, paddingTop: "calc(env(safe-area-inset-top) + 12px)" }}
+      >
         <span style={{ fontFamily: FONT_BODY, fontSize: 13, color: PAPER, opacity: 0.85 }}>
           {index + 1} / {count}
         </span>
@@ -337,8 +340,16 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify }) {
         </button>
       </div>
 
-      {/* Immagine */}
-      <div className="flex-1 flex items-center justify-center px-2 relative select-none">
+      {/* Immagine.
+          `minHeight: 0` non è un dettaglio: senza, questo riquadro elastico si
+          rifiuta di scendere sotto la dimensione naturale della foto, e con
+          un'immagine molto alta cresce oltre lo schermo spingendo FUORI la barra
+          inferiore — didascalia e data sparivano sotto il bordo e sembravano
+          impossibili da modificare. */}
+      <div
+        className="flex-1 flex items-center justify-center px-2 relative select-none"
+        style={{ minHeight: 0, overflow: "hidden" }}
+      >
         {count > 1 && (
           <button onClick={() => go(-1)} style={{ ...btn, position: "absolute", left: 8 }} aria-label="Precedente">
             <ChevronLeft size={24} />
@@ -357,8 +368,13 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify }) {
         )}
       </div>
 
-      {/* Barra inferiore: didascalia editabile + data + elimina */}
-      <div className="px-4 py-3" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 14px)" }}>
+      {/* Barra inferiore: didascalia editabile + data + elimina.
+          flexShrink 0: questa deve restare intera e visibile, è la parte con cui
+          si interagisce. A restringersi è la foto. */}
+      <div
+        className="px-4 py-3"
+        style={{ flexShrink: 0, paddingBottom: "calc(env(safe-area-inset-bottom) + 14px)" }}
+      >
         {/* Didascalia */}
         <div
           className="flex items-center gap-2 mb-3 px-3 py-2"

@@ -1,7 +1,7 @@
 {
   "name": "stab-bonsai",
   "private": true,
-  "version": "0.9.2",
+  "version": "0.9.3",
   "type": "module",
   "description": "App STAB per la gestione delle collezioni bonsai (PWA offline)",
   "scripts": {
