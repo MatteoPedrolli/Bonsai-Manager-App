@@ -93,12 +93,24 @@ export async function updatePhotoCaption(id, caption) {
 // Corregge a mano la data di scatto (input date: "AAAA-MM-GG").
 // Le foto vengono automaticamente riordinate.
 export async function updatePhotoDate(id, isoDay) {
-  if (!isoDay) return;
+  const [y, m, d] = String(isoDay || "").split("-").map(Number);
+  if (!y || !m || !d) throw new Error("Data non valida.");
+
   const existing = await db.photos.get(id);
-  // Mantiene l'ora originale, cambia solo il giorno.
-  const prev = new Date(existing?.takenAt || existing?.createdAt || Date.now());
-  const [y, m, d] = isoDay.split("-").map(Number);
-  const next = new Date(y, m - 1, d, prev.getHours(), prev.getMinutes(), prev.getSeconds());
+
+  // Mantiene l'ora originale, cambia solo il giorno. Ma se la data salvata è
+  // illeggibile (foto arrivata senza data, o con un valore corrotto) l'ora non
+  // si può leggere: prima questo produceva una data invalida e il salvataggio
+  // falliva in silenzio, lasciando la foto senza data e senza modo di darglierla.
+  // In quel caso si parte da mezzogiorno, che non slitta di giorno per fuso.
+  const prev = new Date(existing?.takenAt || existing?.createdAt || NaN);
+  const valida = !isNaN(prev.getTime());
+
+  const next = valida
+    ? new Date(y, m - 1, d, prev.getHours(), prev.getMinutes(), prev.getSeconds())
+    : new Date(y, m - 1, d, 12, 0, 0);
+
+  if (isNaN(next.getTime())) throw new Error("Data non valida.");
   await db.photos.update(id, { takenAt: next.toISOString() });
 }
 

@@ -226,8 +226,17 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify }) {
     // Il segnalibro va messo PRIMA della scrittura: l'elenco può aggiornarsi
     // subito dopo il commit, anche prima che la update() ritorni.
     keepFollowingId.current = current.id;
-    await updatePhotoDate(current.id, day);
-    onNotify?.("Data aggiornata");
+    try {
+      await updatePhotoDate(current.id, day);
+      onNotify?.("Data aggiornata");
+    } catch (e) {
+      // Un salvataggio fallito in silenzio è peggio di un errore: chi prova a
+      // correggere la data non capirebbe perché non cambia nulla.
+      console.error(e);
+      keepFollowingId.current = null;
+      setDay(toInputDay(photoDate(current)));
+      onNotify?.("Non sono riuscito a salvare la data");
+    }
   };
 
   const go = useCallback(
@@ -368,7 +377,12 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify }) {
             style={{ background: "rgba(255,255,255,.08)", borderRadius: 8, cursor: "pointer" }}
             title="Data della foto — determina l'ordine cronologico"
           >
-            <CalendarDays size={14} color={PAPER} style={{ opacity: 0.6 }} />
+            <CalendarDays size={14} color={PAPER} style={{ opacity: day ? 0.6 : 1 }} />
+            {!day && (
+              <span style={{ fontFamily: FONT_BODY, fontSize: 11, color: PAPER, opacity: 0.75 }}>
+                senza data —
+              </span>
+            )}
             <input
               type="date"
               value={day}

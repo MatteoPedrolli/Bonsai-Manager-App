@@ -15,10 +15,18 @@ export const FONT_DISPLAY = "'Shippori Mincho', serif";
 export const FONT_BODY = "'IBM Plex Sans', sans-serif";
 
 // Versione app, mostrata in Opzioni (spec §8).
-export const APP_VERSION = "0.9.0";
+export const APP_VERSION = "0.9.1";
 
 // Changelog visibile in app (spec §8). Più recente in cima.
 export const CHANGELOG = [
+  {
+    version: "0.9.1",
+    date: "2026-09-04",
+    items: [
+      "Corretto: su una foto senza data, la data inserita non veniva salvata e non compariva nessun errore",
+      "Le foto senza data lo dicono nel visore, invece di mostrare un campo vuoto",
+    ],
+  },
   {
     version: "0.9.0",
     date: "2026-08-31",
