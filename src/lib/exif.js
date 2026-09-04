@@ -90,13 +90,22 @@ export async function readExifDate(file) {
 }
 
 // Data di scatto migliore disponibile: EXIF → data di modifica del file → ora.
+//
+// Ritorna anche se la data è CERTA. Solo l'EXIF lo è: gli altri due casi sono
+// ripieghi. In particolare, quando non c'è nulla si finisce per usare "adesso",
+// che ha l'aria di una data vera ed è invece l'istante del caricamento — è
+// esattamente l'equivoco in cui è caduto l'utente (foto passata da Google Foto
+// senza metadati, settembre 2026). Chi mostra la data deve poterlo dire.
 export async function bestPhotoDate(file) {
   const exif = await readExifDate(file);
-  if (exif) return exif;
-  // lastModified è spesso la data reale del file scaricato/salvato
+  if (exif) return { date: exif, certa: true };
+
+  // lastModified è la data del file, non dello scatto: a volte coincide, spesso
+  // è quella della copia scaricata. Utile come stima, non affidabile.
   if (file.lastModified) {
     const d = new Date(file.lastModified);
-    if (!isNaN(d) && d.getFullYear() > 1990) return d;
+    if (!isNaN(d) && d.getFullYear() > 1990) return { date: d, certa: false };
   }
-  return new Date();
+
+  return { date: new Date(), certa: false };
 }

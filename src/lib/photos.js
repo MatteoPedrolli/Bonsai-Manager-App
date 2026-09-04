@@ -57,7 +57,8 @@ export async function addPhotos(plantId, fileList) {
   for (const original of files) {
     // La data di scatto va letta dal file ORIGINALE: la compressione
     // (e la conversione HEIC) rimuovono i metadati EXIF.
-    const takenAt = (await bestPhotoDate(original)).toISOString();
+    const { date, certa } = await bestPhotoDate(original);
+    const takenAt = date.toISOString();
 
     let file = original;
     if (isHeic(file)) {
@@ -75,6 +76,9 @@ export async function addPhotos(plantId, fileList) {
       caption: "",
       createdAt: now(),
       takenAt,
+      // Campo non indicizzato: non serve una nuova versione del DB. Le foto
+      // già salvate non ce l'hanno e restano trattate come certe.
+      dataIncerta: !certa,
       takenName: original.name || "",
     });
     count++;
@@ -111,7 +115,14 @@ export async function updatePhotoDate(id, isoDay) {
     : new Date(y, m - 1, d, 12, 0, 0);
 
   if (isNaN(next.getTime())) throw new Error("Data non valida.");
-  await db.photos.update(id, { takenAt: next.toISOString() });
+  // Una data scelta a mano è per definizione confermata.
+  await db.photos.update(id, { takenAt: next.toISOString(), dataIncerta: false });
+}
+
+// Conferma la data senza cambiarla: serve quando l'app aveva tirato a indovinare
+// ma la data proposta era comunque giusta.
+export async function confermaPhotoDate(id) {
+  await db.photos.update(id, { dataIncerta: false });
 }
 
 // Data usata per l'ordinamento: scatto se nota, altrimenti caricamento.

@@ -1,10 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Camera, Images, ImageIcon, Plus, X, ChevronLeft, ChevronRight, Trash2, Pencil, CalendarDays } from "lucide-react";
+import {
+  Camera, Images, ImageIcon, Plus, X, ChevronLeft, ChevronRight, Trash2, Pencil,
+  CalendarDays, HelpCircle,
+} from "lucide-react";
 import { db } from "../lib/db.js";
 import {
-  addPhotos, deletePhoto, updatePhotoCaption, updatePhotoDate, sortPhotosNewestFirst, photoDate,
+  addPhotos, deletePhoto, updatePhotoCaption, updatePhotoDate, confermaPhotoDate,
+  sortPhotosNewestFirst, photoDate,
 } from "../lib/photos.js";
 import { INK, PAPER, PAPER_DEEP, BARK, SEAL, FONT_DISPLAY, FONT_BODY } from "../lib/constants.js";
 
@@ -112,6 +116,9 @@ export function PhotoStrip({ plantId, onNotify }) {
               }}
             >
               {shortDate(photoDate(photo))}
+              {photo.dataIncerta && (
+                <span title="Data non presente nella foto: da confermare" style={{ opacity: 0.9 }}> ?</span>
+              )}
             </span>
           </div>
         ))}
@@ -369,6 +376,27 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify }) {
             style={{ background: "transparent", border: "none", outline: "none", color: PAPER, fontFamily: FONT_BODY, fontSize: 13.5 }}
           />
         </div>
+
+        {/* Quando la data non era nei dati della foto, l'app ha dovuto tirare a
+            indovinare: dirlo, invece di presentarla come certa. */}
+        {current.dataIncerta && (
+          <div
+            className="flex items-center gap-2 mb-2 px-3 py-2"
+            style={{ background: "rgba(255,255,255,.08)", borderRadius: 8 }}
+          >
+            <HelpCircle size={14} color={PAPER} style={{ opacity: 0.7, flexShrink: 0 }} />
+            <span className="flex-1 min-w-0" style={{ fontFamily: FONT_BODY, fontSize: 11.5, color: PAPER, opacity: 0.85 }}>
+              Questa foto non conteneva la data: quella qui sotto è solo una stima.
+            </span>
+            <button
+              onClick={async () => { await confermaPhotoDate(current.id); onNotify?.("Data confermata"); }}
+              className="flex-shrink-0 px-2.5 py-1"
+              style={{ background: "transparent", border: `1px solid ${PAPER}66`, borderRadius: 5, color: PAPER, fontFamily: FONT_BODY, fontSize: 11 }}
+            >
+              È giusta
+            </button>
+          </div>
+        )}
 
         <div className="flex items-center justify-between gap-3">
           {/* Data dello scatto: modificabile, riordina le foto */}
