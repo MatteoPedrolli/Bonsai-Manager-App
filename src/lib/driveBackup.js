@@ -313,9 +313,20 @@ async function eseguiBackupSuDrive() {
   return { ...counts, duplicati: quanti > 1 ? quanti : 0 };
 }
 
-// Tentativo silenzioso all'apertura dell'app: se il consenso non è più valido
-// non si insiste e non si disturba: l'interfaccia mostrerà il pulsante.
+// Salvataggio silenzioso, da usare quando l'utente non ha chiesto nulla.
+//
+// Regola non negoziabile: qui NON si chiede mai un token. Chiederlo apre la
+// finestra di Google, e siccome il token vive solo in memoria e muore ad ogni
+// chiusura dell'app, il risultato era il selettore dell'account ad OGNI
+// apertura — un pedaggio quotidiano per una comodità che quasi mai si
+// concretizzava. Si procede solo se il permesso è già valido in questa
+// sessione (cioè l'utente ha già salvato su Drive poco fa): in quel caso il
+// salvataggio è davvero gratuito e invisibile.
+//
+// Negli altri casi non si fa nulla: in Collezione compare "Salva su Drive",
+// e il tocco dell'utente è anche ciò che permette alla finestra di aprirsi.
 export async function backupSuDriveSePossibile() {
+  if (!tokenValido()) return null;
   const stato = await statoDrive();
   if (!stato.configurato || !stato.collegato) return null;
   try {

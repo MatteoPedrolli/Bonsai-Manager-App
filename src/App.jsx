@@ -104,8 +104,6 @@ export default function App() {
   );
   const drive = { configurato: isDriveConfigured(), ...driveMeta };
 
-  const driveTentato = useRef(false);
-
   // La libreria di Google va caricata PRIMA che l'utente tocchi il pulsante:
   // aspettarla dentro il clic consuma il gesto, e il browser blocca la finestra.
   useEffect(() => { precaricaGis(); }, []);
@@ -116,13 +114,12 @@ export default function App() {
 
   const notify = useCallback((msg) => setToast(msg), []);
 
-  // Tentativo silenzioso all'apertura, una sola volta per sessione: se c'è da
-  // salvare e il consenso è ancora valido, la copia parte senza chiedere nulla.
-  // Se non è valido non si insiste: in Opzioni resta il pulsante.
+  // Salvataggio silenzioso quando c'è qualcosa da salvare. Non chiede mai il
+  // permesso a Google: se non è già valido in questa sessione non fa nulla e
+  // resta il pulsante in Collezione. Così aprire l'app non costa un popup.
   // (Va dopo `notify`: la dipendenza viene letta durante il render.)
   useEffect(() => {
-    if (driveTentato.current || !drive.collegato || !hasData || !backupStale) return;
-    driveTentato.current = true;
+    if (!drive.collegato || !hasData || !backupStale) return;
     backupSuDriveSePossibile().then((c) => {
       if (c) notify(`Copia salvata su Drive — ${c.plants} schede, ${c.photos} foto`);
     });
@@ -199,9 +196,6 @@ export default function App() {
   };
 
   const handleCollegaDrive = async () => {
-    // Il salvataggio lo facciamo qui: l'effetto automatico non deve partire
-    // anche lui appena `driveCollegato` diventa vero.
-    driveTentato.current = true;
     try {
       await collegaDrive();
       const c = await backupSuDrive();

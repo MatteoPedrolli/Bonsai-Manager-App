@@ -179,7 +179,7 @@ export default function OpzioniScreen({
               <>
                 <div style={{ fontFamily: FONT_BODY, fontSize: 11.5, color: BARK, marginBottom: 10 }}>
                   {drive.ultimo
-                    ? `Ultima copia su Drive: ${fmtDate(drive.ultimo)}. Quando c’è qualcosa di nuovo da salvare l’app prova da sola; se il browser glielo impedisce, in Collezione trovi l’avviso con “Salva su Drive”.`
+                    ? `Ultima copia su Drive: ${fmtDate(drive.ultimo)}. Google non consente alle app nel browser di conservare il permesso, quindi l’app non lo richiede da sola ad ogni avvio: quando c’è qualcosa di nuovo trovi “Salva su Drive” in Collezione, e basta un tocco.`
                     : "Collegato. La prima copia parte al prossimo salvataggio."}
                 </div>
                 <div className="flex gap-2">
