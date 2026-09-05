@@ -6,12 +6,14 @@ import {
 } from "../lib/constants.js";
 import { TopBar } from "./common.jsx";
 import { PianificaModal } from "./InterventoForm.jsx";
+import { useBackClose } from "../lib/useBackClose.js";
 import { classifyPlanned, reminderLabel } from "../lib/reminders.js";
 
 const STATUS_COLOR = { overdue: SEAL, soon: "#B8862F", future: BARK };
 
 export default function PlanScreen({ planned, onAdd, onDelete, plants, tipoOptions, statoOptions }) {
   const [showModal, setShowModal] = useState(false);
+  useBackClose(showModal, () => setShowModal(false));
   const sorted = [...(planned || [])].sort((a, b) => new Date(a.data) - new Date(b.data));
 
   return (

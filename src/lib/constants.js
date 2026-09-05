@@ -15,10 +15,18 @@ export const FONT_DISPLAY = "'Shippori Mincho', serif";
 export const FONT_BODY = "'IBM Plex Sans', sans-serif";
 
 // Versione app, mostrata in Opzioni (spec §8).
-export const APP_VERSION = "0.9.4";
+export const APP_VERSION = "0.9.5";
 
 // Changelog visibile in app (spec §8). Più recente in cima.
 export const CHANGELOG = [
+  {
+    version: "0.9.5",
+    date: "2026-09-05",
+    items: [
+      "Il tasto indietro del telefono non fa più uscire dall'app di colpo",
+      "Chiude prima la foto aperta, poi la scheda, poi riporta alla Collezione: solo da lì esce",
+    ],
+  },
   {
     version: "0.9.4",
     date: "2026-09-05",

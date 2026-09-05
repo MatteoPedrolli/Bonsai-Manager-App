@@ -12,6 +12,7 @@ import {
   backupSuDriveSePossibile, precaricaGis, DriveNonAutorizzato,
 } from "./lib/driveBackup.js";
 import { dueSummary, aggiornaBadge } from "./lib/reminders.js";
+import { useBackClose } from "./lib/useBackClose.js";
 import { TabBar, Toast } from "./components/common.jsx";
 import Home from "./components/Home.jsx";
 import PlantDetail from "./components/PlantDetail.jsx";
@@ -113,6 +114,12 @@ export default function App() {
   useEffect(() => { aggiornaBadge(due.due); }, [due.due]);
 
   const notify = useCallback((msg) => setToast(msg), []);
+
+  // Tasto indietro del telefono: prima riporta alla Collezione, poi esce.
+  // I pannelli si chiudono per primi, essendo aperti dopo.
+  useBackClose(view !== "home", () => setView("home"));
+  useBackClose(showNewPlant, () => setShowNewPlant(false));
+  useBackClose(showNewIntervento, () => setShowNewIntervento(false));
 
   // Salvataggio silenzioso quando c'è qualcosa da salvare. Non chiede mai il
   // permesso a Google: se non è già valido in questa sessione non fa nulla e

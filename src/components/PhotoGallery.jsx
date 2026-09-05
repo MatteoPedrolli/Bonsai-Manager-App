@@ -11,6 +11,7 @@ import {
   sortPhotosNewestFirst, photoDate,
 } from "../lib/photos.js";
 import { INK, PAPER, PAPER_DEEP, BARK, SEAL, FONT_DISPLAY, FONT_BODY } from "../lib/constants.js";
+import { useBackClose } from "../lib/useBackClose.js";
 
 // ISO -> "AAAA-MM-GG" per <input type="date"> (in ora locale, non UTC).
 function toInputDay(iso) {
@@ -59,6 +60,11 @@ export function PhotoStrip({ plantId, onNotify }) {
   const [sheet, setSheet] = useState(false);
   const cameraRef = useRef(null);
   const galleryRef = useRef(null);
+
+  // Tasto indietro del telefono: chiude prima il visore o il foglio delle
+  // sorgenti, senza far uscire dalla scheda della pianta.
+  useBackClose(lightboxIndex !== null, () => setLightboxIndex(null));
+  useBackClose(sheet, () => setSheet(false));
 
   // Salva un elenco di File (da input o da Drive) attraverso la pipeline foto.
   const ingest = async (files, sourceLabel) => {
