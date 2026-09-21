@@ -15,10 +15,19 @@ export const FONT_DISPLAY = "'Shippori Mincho', serif";
 export const FONT_BODY = "'IBM Plex Sans', sans-serif";
 
 // Versione app, mostrata in Opzioni (spec §8).
-export const APP_VERSION = "0.9.5";
+export const APP_VERSION = "0.10.0";
 
 // Changelog visibile in app (spec §8). Più recente in cima.
 export const CHANGELOG = [
+  {
+    version: "0.10.0",
+    date: "2026-09-21",
+    items: [
+      "Puoi scegliere la foto di copertina di ogni scheda: apri la foto e tocca “Usa come copertina”",
+      "Senza una scelta, la copertina resta automatica: la foto più recente",
+      "La copertina scelta ha una stellina nella striscia; toccando di nuovo “Copertina” torna automatica",
+    ],
+  },
   {
     version: "0.9.5",
     date: "2026-09-05",

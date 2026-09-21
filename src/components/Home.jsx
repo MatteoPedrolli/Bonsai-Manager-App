@@ -9,11 +9,20 @@ import { Seal, TopBar, Banner } from "./common.jsx";
 import { dueSummary } from "../lib/reminders.js";
 import { sortPhotos } from "../lib/photos.js";
 
-// Miniatura di copertina: foto più recente della pianta (per data di scatto).
-function CoverThumb({ plantId }) {
+// Miniatura di copertina: quella scelta dal socio se c'è, altrimenti la più
+// recente per data di scatto.
+// Se la foto scelta non esiste più si ricade sull'automatica, senza buchi.
+function CoverThumb({ plantId, copertinaId }) {
   const first = useLiveQuery(
-    () => db.photos.where("plantId").equals(plantId).toArray().then((a) => sortPhotos(a).at(-1)),
-    [plantId]
+    async () => {
+      if (copertinaId) {
+        const scelta = await db.photos.get(copertinaId);
+        if (scelta && scelta.plantId === plantId) return scelta;
+      }
+      const tutte = await db.photos.where("plantId").equals(plantId).toArray();
+      return sortPhotos(tutte).at(-1);
+    },
+    [plantId, copertinaId]
   );
   const [url, setUrl] = useState(null);
   useEffect(() => {
@@ -46,7 +55,7 @@ function PlantCard({ plant, onOpen, statoOptions }) {
       style={{ background: PAPER_DEEP, border: `1px solid ${BARK}55`, borderRadius: 4 }}
     >
       <div className="flex gap-3">
-        <CoverThumb plantId={plant.id} />
+        <CoverThumb plantId={plant.id} copertinaId={plant.copertinaId} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
             <span className="truncate" style={{ fontFamily: FONT_DISPLAY, fontSize: 18, color: INK }}>{plant.nome}</span>

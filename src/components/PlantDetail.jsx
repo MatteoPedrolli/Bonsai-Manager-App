@@ -192,7 +192,12 @@ figcaption{font-size:13px;color:#8C7B65;margin-top:6px}</style></head>
         )}
 
         {/* Foto: striscia + galleria fullscreen */}
-        <PhotoStrip plantId={plant.id} onNotify={onNotify} />
+        <PhotoStrip
+          plantId={plant.id}
+          copertinaId={plant.copertinaId}
+          onCopertina={(id) => onUpdate(plant.id, { copertinaId: id })}
+          onNotify={onNotify}
+        />
 
         <div className="flex gap-2 mb-4">
           <button onClick={exportAlbum} className="flex-1 py-2" style={{ border: `1px solid ${BARK}`, borderRadius: 4, fontFamily: FONT_BODY, fontSize: 11.5, color: INK, background: "transparent" }}>

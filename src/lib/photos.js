@@ -87,7 +87,16 @@ export async function addPhotos(plantId, fileList) {
 }
 
 export async function deletePhoto(id) {
-  await db.photos.delete(id);
+  await db.transaction("rw", db.photos, db.plants, async () => {
+    const foto = await db.photos.get(id);
+    await db.photos.delete(id);
+    // Se era la copertina scelta a mano, la scheda torna alla copertina
+    // automatica invece di puntare a una foto che non esiste più.
+    if (foto) {
+      const pianta = await db.plants.get(foto.plantId);
+      if (pianta?.copertinaId === id) await db.plants.update(pianta.id, { copertinaId: null });
+    }
+  });
 }
 
 export async function updatePhotoCaption(id, caption) {

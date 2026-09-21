@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { useLiveQuery } from "dexie-react-hooks";
 import {
   Camera, Images, ImageIcon, Plus, X, ChevronLeft, ChevronRight, Trash2, Pencil,
-  CalendarDays, HelpCircle,
+  CalendarDays, HelpCircle, Star,
 } from "lucide-react";
 import { db } from "../lib/db.js";
 import {
@@ -46,7 +46,7 @@ function useObjectUrls(photos) {
 // =============================================================================
 //  Striscia foto cronologica + pulsante aggiungi
 // =============================================================================
-export function PhotoStrip({ plantId, onNotify }) {
+export function PhotoStrip({ plantId, copertinaId, onCopertina, onNotify }) {
   // Ordine cronologico inverso per data di SCATTO (takenAt), non di caricamento:
   // prima le più recenti, si scorre indietro nel tempo.
   const photos = useLiveQuery(
@@ -126,6 +126,17 @@ export function PhotoStrip({ plantId, onNotify }) {
                 <span title="Data non presente nella foto: da confermare" style={{ opacity: 0.9 }}> ?</span>
               )}
             </span>
+            {/* Segno solo sulla copertina scelta a mano: quella automatica è
+                semplicemente la prima della striscia, non serve evidenziarla. */}
+            {photo.id === copertinaId && (
+              <span
+                className="absolute flex items-center justify-center"
+                title="Copertina della scheda"
+                style={{ top: 3, left: 3, width: 20, height: 20, borderRadius: "50%", background: "rgba(28,27,25,.62)" }}
+              >
+                <Star size={11} color={PAPER} fill={PAPER} />
+              </span>
+            )}
           </div>
         ))}
 
@@ -159,6 +170,8 @@ export function PhotoStrip({ plantId, onNotify }) {
           startIndex={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
           onNotify={onNotify}
+          copertinaId={copertinaId}
+          onCopertina={onCopertina}
         />
       )}
     </>
@@ -209,7 +222,7 @@ function SourceSheet({ onClose, onCamera, onGallery }) {
 //  Lightbox a schermo intero — swipe (touch), frecce (desktop), tastiera, elimina.
 //  Renderizzata in un portale su document.body per uscire dal contenitore 480px.
 // =============================================================================
-function Lightbox({ photos, urls, startIndex, onClose, onNotify }) {
+function Lightbox({ photos, urls, startIndex, onClose, onNotify, copertinaId, onCopertina }) {
   const [index, setIndex] = useState(startIndex);
   const [confirmDel, setConfirmDel] = useState(false);
   const touch = useRef({ x: 0, y: 0, active: false });
@@ -341,9 +354,37 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify }) {
         <span style={{ fontFamily: FONT_BODY, fontSize: 13, color: PAPER, opacity: 0.85 }}>
           {index + 1} / {count}
         </span>
-        <button onClick={onClose} style={btn} aria-label="Chiudi">
-          <X size={22} />
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Copertina: tocco = diventa la copertina della scheda; se lo è già
+              per scelta, tocco = torna automatica (la più recente). */}
+          {onCopertina && (
+            <button
+              onClick={() => {
+                if (current.id === copertinaId) {
+                  onCopertina(null);
+                  onNotify?.("Copertina di nuovo automatica: la foto più recente");
+                } else {
+                  onCopertina(current.id);
+                  onNotify?.("Impostata come copertina");
+                }
+              }}
+              className="flex items-center gap-1.5 px-3"
+              style={{
+                height: 36, borderRadius: 18, border: "none",
+                background: current.id === copertinaId ? PAPER : "rgba(0,0,0,.45)",
+                color: current.id === copertinaId ? INK : PAPER,
+                fontFamily: FONT_BODY, fontSize: 12,
+              }}
+              aria-label={current.id === copertinaId ? "Togli come copertina" : "Usa come copertina"}
+            >
+              <Star size={14} fill={current.id === copertinaId ? INK : "none"} />
+              {current.id === copertinaId ? "Copertina" : "Usa come copertina"}
+            </button>
+          )}
+          <button onClick={onClose} style={btn} aria-label="Chiudi">
+            <X size={22} />
+          </button>
+        </div>
       </div>
 
       {/* Immagine.
