@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Bonsai Manager — Guida per i soci</title>
+<!--
+  Sorgente della guida PDF per i soci. Si rigenera con Chrome headless:
+
+    chrome.exe --headless --disable-gpu --virtual-time-budget=9000 \
+      --no-pdf-header-footer \
+      --print-to-pdf="...\Bonsai Manager - Guida per i soci.pdf" \
+      "file:///.../docs/guida-soci.html"
+
+  Fondo bianco con i colori dell'app come accenti: un fondo pieno color carta
+  sprecherebbe inchiostro e molte stampanti lo ometterebbero comunque.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4; margin: 15mm 16mm; }
+
+  :root {
+    --ink: #1C1B19;
+    --seal: #B23A2F;
+    --moss: #4A5D45;
+    --bark: #8C7B65;
+    --paper: #EFEBE0;
+    --linea: #8C7B6555;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-size: 10.6pt;
+    line-height: 1.5;
+    color: var(--ink);
+    background: #fff;
+  }
+
+  /* ---------- Testata ---------- */
+  .testata {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+  }
+  .bollo {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: var(--seal); flex-shrink: 0;
+    position: relative; top: -1px;
+  }
+  h1 {
+    font-family: "Shippori Mincho", Georgia, serif;
+    font-weight: 500;
+    font-size: 21pt;
+    letter-spacing: .5px;
+    margin: 0;
+  }
+  .occhiello {
+    margin-left: auto;
+    font-size: 8.5pt;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--bark);
+    font-weight: 600;
+  }
+  .sottotitolo {
+    color: var(--bark);
+    font-size: 10.5pt;
+    margin: 0 0 14px;
+  }
+
+  /* ---------- Indirizzo ---------- */
+  .indirizzo {
+    background: var(--paper);
+    border: 1px solid var(--linea);
+    border-radius: 4px;
+    padding: 11px 14px;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .indirizzo .etichetta {
+    font-size: 8pt; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--bark); font-weight: 600; display: block; margin-bottom: 3px;
+  }
+  .indirizzo .url {
+    font-family: "Shippori Mincho", Georgia, serif;
+    font-size: 13pt;
+    word-break: break-all;
+  }
+
+  /* ---------- Avviso ---------- */
+  .avviso {
+    border-left: 3px solid var(--seal);
+    background: #B23A2F0F;
+    border-radius: 0 4px 4px 0;
+    padding: 11px 14px;
+    margin-bottom: 18px;
+    break-inside: avoid;
+  }
+  .avviso h2 { margin: 0 0 4px; font-size: 11.5pt; }
+  .avviso p { margin: 0; }
+
+  h2 {
+    font-family: "Shippori Mincho", Georgia, serif;
+    font-weight: 500;
+    font-size: 13pt;
+    margin: 0 0 7px;
+  }
+
+  /* ---------- Colonne dei due sistemi ---------- */
+  .sistemi {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  .sistema {
+    border: 1px solid var(--linea);
+    border-radius: 4px;
+    padding: 12px 14px 13px;
+    break-inside: avoid;
+  }
+  .sistema h3 {
+    font-family: "Shippori Mincho", Georgia, serif;
+    font-weight: 700;
+    font-size: 11.5pt;
+    margin: 0 0 2px;
+  }
+  .sistema .quale {
+    font-size: 8.7pt;
+    color: var(--bark);
+    margin: 0 0 8px;
+  }
+  ol { margin: 0; padding-left: 17px; }
+  li { margin-bottom: 5px; }
+  li:last-child { margin-bottom: 0; }
+
+  .chiave { font-weight: 600; }
+
+  /* ---------- Passi numerati ---------- */
+  .passo {
+    display: grid;
+    grid-template-columns: 26px 1fr;
+    gap: 0 11px;
+    margin-bottom: 13px;
+    break-inside: avoid;
+  }
+  .passo .n {
+    font-family: "Shippori Mincho", Georgia, serif;
+    font-weight: 700;
+    font-size: 16pt;
+    color: var(--seal);
+    line-height: 1;
+  }
+  .passo h2 { margin-bottom: 3px; }
+  .passo p { margin: 0 0 4px; }
+
+  .nota {
+    border-left: 3px solid var(--moss);
+    background: #4A5D450F;
+    border-radius: 0 4px 4px 0;
+    padding: 9px 13px;
+    font-size: 9.8pt;
+    margin: 14px 0;
+    break-inside: avoid;
+  }
+  .nota strong { color: var(--moss); }
+
+  .piede {
+    margin-top: 18px;
+    padding-top: 9px;
+    border-top: 1px solid var(--linea);
+    font-size: 9pt;
+    color: var(--bark);
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .paginanuova { break-before: page; }
+
+  .blocco { margin-bottom: 13px; break-inside: avoid; }
+  .blocco p { margin: 0; }
+</style>
+</head>
+<body>
+
+  <div class="testata">
+    <span class="bollo"></span>
+    <h1>Bonsai Manager</h1>
+    <span class="occhiello">Guida per i soci</span>
+  </div>
+  <p class="sottotitolo">
+    L'applicazione per tenere la scheda di ogni bonsai: interventi, misure, foto e storico.
+    Funziona anche senza rete e non richiede nessuna registrazione.
+  </p>
+
+  <div class="indirizzo">
+    <span class="etichetta">Apri questo indirizzo dal telefono</span>
+    <span class="url">matteopedrolli.github.io/Bonsai-Manager-App</span>
+  </div>
+
+  <div class="avviso">
+    <h2>Installala sulla schermata Home. Non usarla dal browser.</h2>
+    <p>
+      Non è un consiglio estetico. Se l'app resta una semplice pagina del browser, il telefono
+      è <span class="chiave">autorizzato a cancellarne i dati</span> quando ha bisogno di spazio,
+      senza avvisare: spariscono schede, storico e foto. Installandola, l'app chiede al sistema
+      di non toccare i tuoi dati — ed è la differenza fra una collezione al sicuro e una a rischio.
+    </p>
+  </div>
+
+  <div class="sistemi">
+    <div class="sistema">
+      <h3>Android</h3>
+      <p class="quale">Apri l'indirizzo con <strong>Chrome</strong></p>
+      <ol>
+        <li>Tocca i <span class="chiave">tre puntini ⋮</span> in alto a destra.</li>
+        <li>Scegli <span class="chiave">“Installa app”</span> (su alcuni telefoni: “Aggiungi a schermata Home”).</li>
+        <li>Conferma. L'icona compare fra le tue app.</li>
+      </ol>
+    </div>
+
+    <div class="sistema">
+      <h3>iPhone e iPad</h3>
+      <p class="quale">Apri l'indirizzo con <strong>Safari</strong> — da Chrome non funziona</p>
+      <ol>
+        <li>Tocca l'icona <span class="chiave">Condividi</span> (il quadrato con la freccia verso l'alto).</li>
+        <li>Scorri e scegli <span class="chiave">“Aggiungi a Home”</span>.</li>
+        <li>Conferma con “Aggiungi”.</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="nota">
+    <strong>Da qui in poi apri sempre l'app dall'icona</strong>, non dal browser. È aprendola
+    dall'icona che il telefono le concede la protezione dei dati. Puoi verificarlo in
+    <em>Opzioni → Sicurezza dei dati</em>: deve dire <em>“Dati protetti su questo dispositivo”</em>.
+  </div>
+
+  <div class="piede">
+    <span>Scuola Trentina d'Arte Bonsai</span>
+    <span>Segue: la prima cosa da fare →</span>
+  </div>
+
+  <!-- ============ Pagina 2 ============ -->
+  <div class="paginanuova"></div>
+
+  <div class="testata">
+    <span class="bollo"></span>
+    <h1>La prima cosa da fare</h1>
+    <span class="occhiello">Backup</span>
+  </div>
+  <p class="sottotitolo">
+    I tuoi dati stanno <strong>solo sul tuo telefono</strong>. Non c'è nessun server, nessuno può
+    leggerli — ma nessuno può nemmeno restituirteli se il telefono si perde o si rompe.
+    Il backup è l'unica rete di sicurezza, e si fa in dieci secondi.
+  </p>
+
+  <div class="passo">
+    <span class="n">1</span>
+    <div>
+      <h2>Salva una copia, subito</h2>
+      <p>Vai su <span class="chiave">Opzioni → Backup dati</span> e scegli:</p>
+      <ol>
+        <li><span class="chiave">Salva sul dispositivo</span> — il file finisce nei download del telefono. Resta lì anche se il browser cancella i dati dell'app.</li>
+        <li><span class="chiave">Condividi</span> — manda il file dove vuoi: Drive, mail, un messaggio a te stesso. È la copia che sopravvive alla perdita del telefono.</li>
+      </ol>
+      <p style="margin-top:5px">Le due cose proteggono da guai diversi: falle entrambe.</p>
+    </div>
+  </div>
+
+  <div class="passo">
+    <span class="n">2</span>
+    <div>
+      <h2>Ripeti quando l'app te lo chiede</h2>
+      <p>
+        Ogni quindici giorni, e ogni volta che hai aggiunto qualcosa senza salvarlo, in Collezione
+        compare un avviso. Non ignorarlo: un backup vecchio di tre mesi vale quanto la collezione
+        di tre mesi fa.
+      </p>
+    </div>
+  </div>
+
+  <div class="passo">
+    <span class="n">3</span>
+    <div>
+      <h2>Se vuoi, collega Google Drive <span style="font-family:'IBM Plex Sans';font-size:9.5pt;color:var(--bark);font-weight:400">(facoltativo)</span></h2>
+      <p>
+        In <span class="chiave">Opzioni → Copia automatica su Google Drive</span> colleghi il tuo
+        account una volta sola. Da lì in poi la copia si aggiorna con un tocco, sempre nello stesso
+        file: niente da gestire, niente da ricordare.
+      </p>
+      <p>
+        L'app vede <span class="chiave">soltanto il file di backup che crea lei</span>. Il resto del
+        tuo Drive le è invisibile, anche in lettura.
+      </p>
+    </div>
+  </div>
+
+  <div class="nota">
+    <strong>Per ripristinare tutto</strong> su un telefono nuovo: installa l'app, poi
+    <em>Opzioni → Importa backup</em> e scegli il file salvato. Tornano schede, storico e foto.
+  </div>
+
+  <div class="nota" style="border-left-color: var(--bark); background:#8C7B650F">
+    <strong style="color:var(--bark)">Un dettaglio sulle foto.</strong> L'app ordina le foto per
+    data di scatto, leggendola dal file. Alcune immagini — screenshot, foto ricevute su WhatsApp,
+    copie passate da Google Foto — quella data non ce l'hanno: in quel caso l'app propone una stima
+    e la segna con un <strong style="color:var(--bark)">?</strong>. Aprila e correggila, oppure
+    conferma con “È giusta”.
+  </div>
+
+  <div class="piede">
+    <span>Scuola Trentina d'Arte Bonsai</span>
+    <span>Segue: le basi d'uso →</span>
+  </div>
+
+  <!-- ============ Pagina 3 ============ -->
+  <div class="paginanuova"></div>
+
+  <div class="testata">
+    <span class="bollo"></span>
+    <h1>Le basi d'uso</h1>
+    <span class="occhiello">In pratica</span>
+  </div>
+  <p class="sottotitolo">
+    In fondo allo schermo ci sono quattro voci: <strong>Collezione</strong> (le tue piante),
+    <strong>Intervento</strong> (il pulsante rosso al centro), <strong>Pianificazione</strong> e
+    <strong>Opzioni</strong>. Quasi tutto parte da lì.
+  </p>
+
+  <div class="blocco">
+    <h2>Aggiungere una pianta</h2>
+    <p>
+      In Collezione tocca <span class="chiave">“+ Nuova scheda”</span>. L'unico campo obbligatorio è
+      <span class="chiave">Nome pianta</span>: specie, provenienza, data d'ingresso, tipo e stato
+      puoi metterli dopo. Se sbagli a scrivere qualcosa, nella scheda tocca la
+      <span class="chiave">matita in alto a destra</span> e correggi nome, specie e provenienza.
+    </p>
+  </div>
+
+  <div class="blocco">
+    <h2>Registrare un intervento</h2>
+    <p>
+      Dentro la scheda della pianta trovi <span class="chiave">“Registra intervento”</span> e
+      <span class="chiave">“Pianifica”</span>: partono già su quella pianta. Scegli il tipo
+      (concimazione, rinvaso, potatura, impostazione, defogliazione, slegatura, altro) e conferma.
+      Finisce nello storico e aggiorna da solo le date di riepilogo della scheda.
+    </p>
+    <p style="margin-top:5px">
+      La <span class="chiave">data parte da oggi</span>, ma si può cambiare: se hai concimato
+      domenica scorsa e lo registri oggi, metti la data giusta e lo storico resta veritiero.
+    </p>
+  </div>
+
+  <div class="nota">
+    <strong>La scorciatoia che fa risparmiare più tempo.</strong> Dal pulsante rosso in fondo allo
+    schermo non sei costretto a scegliere una pianta sola: puoi dire <em>Un tag</em> (per esempio
+    tutte le conifere, o tutte quelle in formazione) oppure <em>Tutte le piante</em>. L'app ti dice
+    prima quante schede verranno coinvolte, e scrive l'intervento nello storico di ognuna.
+    Concimato tutto il bancale? Un'operazione invece di trenta.
+  </div>
+
+  <div class="blocco">
+    <h2>Le foto</h2>
+    <p>
+      Dentro una scheda, tocca <span class="chiave">“Aggiungi”</span> nella striscia delle foto:
+      puoi scattare sul momento o pescare dalla galleria (dove trovi anche Google Foto). Sono
+      ordinate <span class="chiave">dalla più recente alla più vecchia</span>, per data di scatto —
+      quindi una foto del 2019 caricata oggi va al suo posto nel tempo, non in cima.
+    </p>
+    <p style="margin-top:5px">
+      Tocca una miniatura per vederla a schermo intero: lì puoi scorrere le altre, scrivere una
+      didascalia, correggere la data ed eliminarla. Il <span class="chiave">tasto indietro</span>
+      del telefono chiude la foto e ti riporta alla scheda.
+    </p>
+    <p style="margin-top:5px">
+      <span class="chiave">La copertina</span> — la foto accanto al nome in Collezione — è la più
+      recente. Se preferisci un'altra, aprila e tocca
+      <span class="chiave">“Usa come copertina”</span>: resta quella anche quando aggiungi foto
+      nuove, e la riconosci dalla stellina. Toccando di nuovo “Copertina” torna automatica.
+    </p>
+  </div>
+
+  <div class="blocco">
+    <h2>Pianificare quello che va fatto</h2>
+    <p>
+      Una pianificazione è un intervento con una <span class="chiave">data futura</span>. Quando il
+      momento si avvicina lo vedi in due modi: un avviso in Collezione e il
+      <span class="chiave">numero sull'icona</span> dell'app, che resta lì anche senza aprirla.
+      Quando l'hai fatto, tocca <span class="chiave">“Fatto”</span>: diventa un intervento nello
+      storico della pianta e sparisce dall'elenco.
+    </p>
+  </div>
+
+  <div class="blocco">
+    <h2>Due cose che tornano utili</h2>
+    <p>
+      In fondo alla Collezione c'è una <span class="chiave">barra di filtri</span> per stato: comoda
+      quando le piante diventano tante. E da dentro una scheda puoi tirare fuori
+      <span class="chiave">“Esporta album foto”</span> — un file con tutte le foto in ordine, con le
+      date — o <span class="chiave">“Esporta storico”</span>, l'elenco degli interventi.
+      Buoni da mostrare, e da portare a una mostra o a una lezione.
+    </p>
+  </div>
+
+  <div class="piede">
+    <span>Problemi o domande: matteo.pedrolli@gmail.com</span>
+    <span>Versione 0.12.0 — novembre 2026</span>
+  </div>
+
+</body>
+</html>
