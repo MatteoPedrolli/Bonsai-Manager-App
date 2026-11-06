@@ -15,10 +15,18 @@ export const FONT_DISPLAY = "'Shippori Mincho', serif";
 export const FONT_BODY = "'IBM Plex Sans', sans-serif";
 
 // Versione app, mostrata in Opzioni (spec §8).
-export const APP_VERSION = "0.10.0";
+export const APP_VERSION = "0.11.0";
 
 // Changelog visibile in app (spec §8). Più recente in cima.
 export const CHANGELOG = [
+  {
+    version: "0.11.0",
+    date: "2026-11-06",
+    items: [
+      "Dentro la scheda di una pianta ci sono due pulsanti: “Registra intervento” e “Pianifica”",
+      "Partono già sulla pianta aperta: non devi più riselezionarla",
+    ],
+  },
   {
     version: "0.10.0",
     date: "2026-09-21",

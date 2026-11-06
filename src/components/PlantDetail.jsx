@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, X, Trash2, Pencil, Check } from "lucide-react";
+import { Plus, X, Trash2, Pencil, Check, CalendarClock } from "lucide-react";
 import {
   INK, PAPER, PAPER_DEEP, SEAL, BARK, FONT_DISPLAY, FONT_BODY,
   colorForStato, fmtDate,
@@ -7,6 +7,8 @@ import {
 import { Seal, TopBar, Ring } from "./common.jsx";
 import { PhotoStrip } from "./PhotoGallery.jsx";
 import { getPhotos, photoDate } from "../lib/photos.js";
+import { NewInterventoModal, PianificaModal } from "./InterventoForm.jsx";
+import { useBackClose } from "../lib/useBackClose.js";
 
 function blobToDataURL(blob) {
   return new Promise((res, rej) => {
@@ -27,9 +29,16 @@ function downloadText(filename, text, type = "text/plain") {
   URL.revokeObjectURL(url);
 }
 
-export default function PlantDetail({ plant, onBack, onUpdate, onDelete, statoOptions, onNotify }) {
+export default function PlantDetail({
+  plant, onBack, onUpdate, onDelete, statoOptions, onNotify,
+  tipoOptions, onApplyIntervento, onAddPlanned,
+}) {
   const [showTagPicker, setShowTagPicker] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  // "intervento" | "pianifica" | null
+  const [azione, setAzione] = useState(null);
+  useBackClose(azione !== null, () => setAzione(null));
   const statoTags = plant.tags?.stato || [];
 
   // Stato locale editabile (misure + note): sincronizzato al cambio pianta,
@@ -241,6 +250,26 @@ figcaption{font-size:13px;color:#8C7B65;margin-top:6px}</style></head>
         </div>
 
         {/* Note */}
+        {/* Azioni sulla pianta aperta: la pianta è già decisa, quindi questi
+            due pulsanti saltano la scelta del target che serve solo quando si
+            parte dalla barra in basso. */}
+        <div className="flex gap-2 mb-5">
+          <button
+            onClick={() => setAzione("intervento")}
+            className="flex-1 py-2.5 flex items-center justify-center gap-2"
+            style={{ background: SEAL, color: PAPER, borderRadius: 4, fontFamily: FONT_BODY, fontSize: 12.5 }}
+          >
+            <Plus size={15} /> Registra intervento
+          </button>
+          <button
+            onClick={() => setAzione("pianifica")}
+            className="flex-1 py-2.5 flex items-center justify-center gap-2"
+            style={{ border: `1px solid ${INK}`, color: INK, borderRadius: 4, fontFamily: FONT_BODY, fontSize: 12.5, background: "transparent" }}
+          >
+            <CalendarClock size={15} /> Pianifica
+          </button>
+        </div>
+
         <div style={{ fontFamily: FONT_DISPLAY, fontSize: 16, color: INK, marginBottom: 8 }}>Note</div>
         <textarea
           value={note}
@@ -298,6 +327,28 @@ figcaption{font-size:13px;color:#8C7B65;margin-top:6px}</style></head>
           )}
         </div>
       </div>
+
+      {azione === "intervento" && (
+        <NewInterventoModal
+          onClose={() => setAzione(null)}
+          onSubmit={onApplyIntervento}
+          plants={[plant]}
+          pianta={plant}
+          tipoOptions={tipoOptions}
+          statoOptions={statoOptions}
+        />
+      )}
+
+      {azione === "pianifica" && (
+        <PianificaModal
+          onClose={() => setAzione(null)}
+          onSave={onAddPlanned}
+          plants={[plant]}
+          pianta={plant}
+          tipoOptions={tipoOptions}
+          statoOptions={statoOptions}
+        />
+      )}
     </div>
   );
 }

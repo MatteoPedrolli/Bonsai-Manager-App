@@ -12,9 +12,13 @@ import { countMatches } from "../lib/repo.js";
 // appena fatto parte da oggi e si può retrodatare (l'ho fatto domenica scorsa);
 // per una pianificazione va scelta, perché una data "di default" nel futuro non
 // esiste.
-function InterventoForm({ plants, tipoOptions, statoOptions, dateLabel, defaultData = "", onSubmit, submitLabel }) {
+// `pianta`: quando il form si apre da dentro una scheda la pianta è già
+// decisa, quindi il selettore del target non si mostra nemmeno — chiedere
+// "applica a quale pianta?" a chi ha quella pianta aperta sarebbe assurdo.
+// Dalla barra in basso resta invece disponibile la scelta completa.
+function InterventoForm({ plants, tipoOptions, statoOptions, dateLabel, defaultData = "", onSubmit, submitLabel, pianta }) {
   const [target, setTarget] = useState("scheda");
-  const [riferimento, setRiferimento] = useState("");
+  const [riferimento, setRiferimento] = useState(pianta ? String(pianta.id) : "");
   const [tipoKey, setTipoKey] = useState(INTERVENTIONS[0].key);
   const [detail, setDetail] = useState("");
   const [data, setData] = useState(defaultData);
@@ -38,26 +42,38 @@ function InterventoForm({ plants, tipoOptions, statoOptions, dateLabel, defaultD
 
   return (
     <>
-      <div style={{ fontFamily: FONT_BODY, fontSize: 11, color: BARK, marginBottom: 6 }}>Applica a</div>
-      <div className="flex gap-2 mb-3">
-        {[["scheda", "Scheda singola"], ["tag", "Un tag"], ["tutte", "Tutte le piante"]].map(([key, label]) => (
-          <button
-            key={key}
-            onClick={() => { setTarget(key); setRiferimento(""); setError(""); }}
-            className="flex-1 py-2"
-            style={{
-              fontFamily: FONT_BODY, fontSize: 11.5, borderRadius: 4,
-              border: `1px solid ${target === key ? SEAL : BARK}`,
-              background: target === key ? SEAL : "transparent",
-              color: target === key ? PAPER : INK,
-            }}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      {pianta ? (
+        <div className="mb-4 px-3 py-2" style={{ background: PAPER_DEEP, borderRadius: 4 }}>
+          <span style={{ fontFamily: FONT_BODY, fontSize: 11, color: BARK }}>Pianta</span>
+          <div style={{ fontFamily: FONT_DISPLAY, fontSize: 15, color: INK }}>
+            {pianta.nome}
+            {pianta.specie ? <span style={{ fontFamily: FONT_BODY, fontSize: 11.5, color: BARK }}> — {pianta.specie}</span> : null}
+          </div>
+        </div>
+      ) : (
+        <>
+          <div style={{ fontFamily: FONT_BODY, fontSize: 11, color: BARK, marginBottom: 6 }}>Applica a</div>
+          <div className="flex gap-2 mb-3">
+            {[["scheda", "Scheda singola"], ["tag", "Un tag"], ["tutte", "Tutte le piante"]].map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => { setTarget(key); setRiferimento(""); setError(""); }}
+                className="flex-1 py-2"
+                style={{
+                  fontFamily: FONT_BODY, fontSize: 11.5, borderRadius: 4,
+                  border: `1px solid ${target === key ? SEAL : BARK}`,
+                  background: target === key ? SEAL : "transparent",
+                  color: target === key ? PAPER : INK,
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
 
-      {target === "scheda" && (
+      {!pianta && target === "scheda" && (
         <div className="mb-4">
           <label style={{ fontFamily: FONT_BODY, fontSize: 11, color: BARK }}>Pianta</label>
           <select value={riferimento} onChange={(e) => setRiferimento(e.target.value)} className="w-full p-2 mt-1" style={inputStyle}>
@@ -188,11 +204,11 @@ function Sheet({ title, onClose, children }) {
   );
 }
 
-export function NewInterventoModal({ onClose, onSubmit, plants, tipoOptions, statoOptions }) {
+export function NewInterventoModal({ onClose, onSubmit, plants, tipoOptions, statoOptions, pianta }) {
   return (
     <Sheet title="Nuovo intervento" onClose={onClose}>
       <InterventoForm
-        plants={plants} tipoOptions={tipoOptions} statoOptions={statoOptions}
+        plants={plants} tipoOptions={tipoOptions} statoOptions={statoOptions} pianta={pianta}
         dateLabel="Data dell'intervento" defaultData={todayISO()}
         submitLabel="Registra intervento"
         onSubmit={(payload) => { onSubmit(payload); onClose(); }}
@@ -201,11 +217,11 @@ export function NewInterventoModal({ onClose, onSubmit, plants, tipoOptions, sta
   );
 }
 
-export function PianificaModal({ onClose, onSave, plants, tipoOptions, statoOptions }) {
+export function PianificaModal({ onClose, onSave, plants, tipoOptions, statoOptions, pianta }) {
   return (
     <Sheet title="Pianifica intervento" onClose={onClose}>
       <InterventoForm
-        plants={plants} tipoOptions={tipoOptions} statoOptions={statoOptions}
+        plants={plants} tipoOptions={tipoOptions} statoOptions={statoOptions} pianta={pianta}
         dateLabel="Data prevista" defaultData=""
         submitLabel="Salva pianificazione"
         onSubmit={({ target, riferimento, tipoDef, data }) => {

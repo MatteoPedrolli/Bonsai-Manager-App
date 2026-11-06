@@ -272,6 +272,9 @@ export default function App() {
           onUpdate={repo.updatePlant}
           onDelete={handleDeletePlant}
           statoOptions={statoOptions}
+          tipoOptions={tipoOptions}
+          onApplyIntervento={handleApplyIntervento}
+          onAddPlanned={repo.addPlanned}
           onNotify={notify}
         />
       )}
