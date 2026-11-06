@@ -49,7 +49,12 @@ export default function PlantDetail({
   // Anagrafica (nome/specie/provenienza): non sempre modificabile, per non
   // cambiarla per sbaglio toccando il titolo. Si apre con la matita in barra.
   const [editIdent, setEditIdent] = useState(false);
-  const identOf = (p) => ({ nome: p.nome, specie: p.specie || "", provenienza: p.provenienza || "" });
+  const identOf = (p) => ({
+    nome: p.nome,
+    specie: p.specie || "",
+    provenienza: p.provenienza || "",
+    dataIngresso: p.dataIngresso || "",
+  });
   const [ident, setIdent] = useState(() => identOf(plant));
 
   useEffect(() => {
@@ -123,7 +128,7 @@ figcaption{font-size:13px;color:#8C7B65;margin-top:6px}</style></head>
           <button
             onClick={() => setEditIdent((v) => !v)}
             className="p-1"
-            aria-label={editIdent ? "Fine modifica" : "Modifica nome e specie"}
+            aria-label={editIdent ? "Fine modifica" : "Modifica dati della scheda"}
           >
             {editIdent ? <Check size={19} /> : <Pencil size={17} />}
           </button>
@@ -133,10 +138,16 @@ figcaption{font-size:13px;color:#8C7B65;margin-top:6px}</style></head>
       <div className="px-4 pt-4">
         {editIdent ? (
           <div className="p-3 mb-1" style={inputCard}>
-            {[["nome", "Nome"], ["specie", "Specie"], ["provenienza", "Provenienza"]].map(([field, label]) => (
+            {[
+              ["nome", "Nome"],
+              ["specie", "Specie"],
+              ["provenienza", "Provenienza"],
+              ["dataIngresso", "Data d'ingresso"],
+            ].map(([field, label]) => (
               <label key={field} className="block mb-2 last:mb-0">
                 <span style={{ fontFamily: FONT_BODY, fontSize: 10, color: BARK }}>{label}</span>
                 <input
+                  type={field === "dataIngresso" ? "date" : "text"}
                   value={ident[field]}
                   onChange={(e) => setIdent((s) => ({ ...s, [field]: e.target.value }))}
                   onBlur={() => commitIdent(field)}
@@ -153,9 +164,18 @@ figcaption{font-size:13px;color:#8C7B65;margin-top:6px}</style></head>
             ))}
           </div>
         ) : (
-          <div style={{ fontFamily: FONT_BODY, fontSize: 12, color: BARK, fontStyle: "italic" }}>
-            {plant.specie}{plant.provenienza ? ` — ${plant.provenienza}` : ""}
-          </div>
+          <>
+            <div style={{ fontFamily: FONT_BODY, fontSize: 12, color: BARK, fontStyle: "italic" }}>
+              {plant.specie}{plant.provenienza ? ` — ${plant.provenienza}` : ""}
+            </div>
+            {/* Riga a parte: infilata nella precedente, con specie e
+                provenienza già lunghe, finirebbe troncata. */}
+            {plant.dataIngresso && (
+              <div style={{ fontFamily: FONT_BODY, fontSize: 11.5, color: BARK, marginTop: 1 }}>
+                In collezione dal {fmtDate(plant.dataIngresso)}
+              </div>
+            )}
+          </>
         )}
 
         {/* Tag tipo + stato */}

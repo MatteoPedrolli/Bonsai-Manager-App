@@ -15,10 +15,18 @@ export const FONT_DISPLAY = "'Shippori Mincho', serif";
 export const FONT_BODY = "'IBM Plex Sans', sans-serif";
 
 // Versione app, mostrata in Opzioni (spec §8).
-export const APP_VERSION = "0.12.0";
+export const APP_VERSION = "0.12.1";
 
 // Changelog visibile in app (spec §8). Più recente in cima.
 export const CHANGELOG = [
+  {
+    version: "0.12.1",
+    date: "2026-11-06",
+    items: [
+      "Nella scheda si vede da quando la pianta è in collezione",
+      "La data d'ingresso si corregge con la matita, insieme a nome, specie e provenienza",
+    ],
+  },
   {
     version: "0.12.0",
     date: "2026-11-06",
