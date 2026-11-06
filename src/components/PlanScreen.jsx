@@ -1,19 +1,37 @@
 import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Check } from "lucide-react";
 import {
-  INK, PAPER, PAPER_DEEP, SEAL, BARK, FONT_DISPLAY, FONT_BODY,
+  INK, PAPER, PAPER_DEEP, SEAL, BARK, MOSS, FONT_DISPLAY, FONT_BODY,
   INTERVENTIONS, fmtDate,
 } from "../lib/constants.js";
 import { TopBar } from "./common.jsx";
-import { PianificaModal } from "./InterventoForm.jsx";
+import { PianificaModal, NewInterventoModal } from "./InterventoForm.jsx";
 import { useBackClose } from "../lib/useBackClose.js";
 import { classifyPlanned, reminderLabel } from "../lib/reminders.js";
+import { targetDaPianificazione } from "../lib/repo.js";
 
 const STATUS_COLOR = { overdue: SEAL, soon: "#B8862F", future: BARK };
 
-export default function PlanScreen({ planned, onAdd, onDelete, plants, tipoOptions, statoOptions }) {
+export default function PlanScreen({ planned, onAdd, onDelete, onApplyIntervento, plants, tipoOptions, statoOptions }) {
   const [showModal, setShowModal] = useState(false);
   useBackClose(showModal, () => setShowModal(false));
+
+  // Pianificazione che si sta segnando come eseguita. Si passa dal pannello
+  // dell'intervento invece di registrarlo di nascosto: la pianificazione non
+  // contiene il dettaglio (che concime, quale substrato) e la data vera può
+  // non essere quella prevista. Un tocco in più, uno storico che vale.
+  const [completa, setCompleta] = useState(null);
+  useBackClose(completa !== null, () => setCompleta(null));
+
+  const bersaglio = completa ? targetDaPianificazione(completa, plants) : null;
+  const piantaCompleta =
+    bersaglio?.target === "scheda"
+      ? (plants || []).find((p) => String(p.id) === String(bersaglio.riferimento))
+      : null;
+  const tipoKeyCompleta = completa
+    ? (INTERVENTIONS.find((i) => i.label === completa.tipo) || INTERVENTIONS[INTERVENTIONS.length - 1]).key
+    : null;
+
   const sorted = [...(planned || [])].sort((a, b) => new Date(a.data) - new Date(b.data));
 
   return (
@@ -65,6 +83,14 @@ export default function PlanScreen({ planned, onAdd, onDelete, plants, tipoOptio
                   {reminderLabel(item)}
                 </div>
               </div>
+              <button
+                onClick={() => setCompleta(item)}
+                className="flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5"
+                style={{ background: MOSS, color: PAPER, border: "none", borderRadius: 4, fontFamily: FONT_BODY, fontSize: 11.5 }}
+                aria-label="Segna come eseguito"
+              >
+                <Check size={13} /> Fatto
+              </button>
               <button onClick={() => onDelete(item.id)} className="flex-shrink-0 p-1" aria-label="Elimina">
                 <Trash2 size={15} color={BARK} />
               </button>
@@ -78,6 +104,25 @@ export default function PlanScreen({ planned, onAdd, onDelete, plants, tipoOptio
           onClose={() => setShowModal(false)}
           onSave={onAdd}
           plants={plants} tipoOptions={tipoOptions} statoOptions={statoOptions}
+        />
+      )}
+
+      {completa && (
+        <NewInterventoModal
+          onClose={() => setCompleta(null)}
+          onSubmit={async (payload) => {
+            // Prima si registra l'intervento, poi si toglie dalla
+            // pianificazione: se la registrazione fallisse, la pianificazione
+            // resterebbe lì invece di sparire senza aver prodotto nulla.
+            await onApplyIntervento(payload);
+            await onDelete(completa.id);
+          }}
+          plants={plants}
+          pianta={piantaCompleta || undefined}
+          targetIniziale={bersaglio}
+          tipoIniziale={tipoKeyCompleta}
+          tipoOptions={tipoOptions}
+          statoOptions={statoOptions}
         />
       )}
     </div>

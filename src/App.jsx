@@ -284,6 +284,7 @@ export default function App() {
           planned={planned}
           onAdd={repo.addPlanned}
           onDelete={repo.deletePlanned}
+          onApplyIntervento={handleApplyIntervento}
           plants={plants || []}
           tipoOptions={tipoOptions}
           statoOptions={statoOptions}

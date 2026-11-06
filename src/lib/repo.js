@@ -111,6 +111,25 @@ export async function addPlanned(item) {
   return db.planned.add({ ...item, createdAt: now() });
 }
 
+// Da una pianificazione ricava il bersaglio da passare ad applyIntervento.
+// Le pianificazioni salvate prima della v0.12.0 conservano solo l'etichetta
+// testuale (`targetLabel`) e non il `riferimento`: per quelle si ricostruisce
+// il possibile — e se la pianta è stata rinominata nel frattempo il nome non
+// combacia più, quindi si restituisce vuoto e il form chiederà di scegliere,
+// invece di registrare l'intervento sulla pianta sbagliata.
+export function targetDaPianificazione(item, plants) {
+  const target = item?.targetType || "scheda";
+  if (item?.riferimento !== undefined && item?.riferimento !== null) {
+    return { target, riferimento: String(item.riferimento) };
+  }
+  if (target === "tutte") return { target, riferimento: "" };
+  if (target === "tag") {
+    return { target, riferimento: String(item?.targetLabel || "").replace(/^Tag:\s*/, "") };
+  }
+  const p = (plants || []).find((x) => x.nome === item?.targetLabel);
+  return { target, riferimento: p ? String(p.id) : "" };
+}
+
 export async function deletePlanned(id) {
   await db.planned.delete(id);
 }

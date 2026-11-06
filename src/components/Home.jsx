@@ -104,9 +104,11 @@ export default function Home({
     filter === "Tutte" ? plants : (plants || []).filter((p) => (p.tags?.stato || []).includes(filter));
 
   const due = dueSummary(planned);
+  // "intervento" + "i" dava "interventoi": il plurale va scritto per intero.
+  const interventi = (n) => `${n} ${n > 1 ? "interventi" : "intervento"}`;
   const dueMsg = due.overdue > 0
-    ? `${due.overdue} intervento${due.overdue > 1 ? "i" : ""} in ritardo${due.soon > 0 ? `, ${due.soon} in scadenza` : ""}`
-    : `${due.soon} intervento${due.soon > 1 ? "i" : ""} in scadenza`;
+    ? `${interventi(due.overdue)} in ritardo${due.soon > 0 ? `, ${due.soon} in scadenza` : ""}`
+    : `${interventi(due.soon)} in scadenza`;
 
   return (
     <div style={{ background: PAPER, minHeight: "100dvh" }}>

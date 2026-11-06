@@ -16,10 +16,15 @@ import { countMatches } from "../lib/repo.js";
 // decisa, quindi il selettore del target non si mostra nemmeno — chiedere
 // "applica a quale pianta?" a chi ha quella pianta aperta sarebbe assurdo.
 // Dalla barra in basso resta invece disponibile la scelta completa.
-function InterventoForm({ plants, tipoOptions, statoOptions, dateLabel, defaultData = "", onSubmit, submitLabel, pianta }) {
-  const [target, setTarget] = useState("scheda");
-  const [riferimento, setRiferimento] = useState(pianta ? String(pianta.id) : "");
-  const [tipoKey, setTipoKey] = useState(INTERVENTIONS[0].key);
+function InterventoForm({
+  plants, tipoOptions, statoOptions, dateLabel, defaultData = "", onSubmit, submitLabel,
+  pianta, tipoIniziale, targetIniziale,
+}) {
+  const [target, setTarget] = useState(targetIniziale?.target || "scheda");
+  const [riferimento, setRiferimento] = useState(
+    pianta ? String(pianta.id) : (targetIniziale?.riferimento ?? "")
+  );
+  const [tipoKey, setTipoKey] = useState(tipoIniziale || INTERVENTIONS[0].key);
   const [detail, setDetail] = useState("");
   const [data, setData] = useState(defaultData);
   const [error, setError] = useState("");
@@ -204,11 +209,12 @@ function Sheet({ title, onClose, children }) {
   );
 }
 
-export function NewInterventoModal({ onClose, onSubmit, plants, tipoOptions, statoOptions, pianta }) {
+export function NewInterventoModal({ onClose, onSubmit, plants, tipoOptions, statoOptions, pianta, tipoIniziale, targetIniziale }) {
   return (
     <Sheet title="Nuovo intervento" onClose={onClose}>
       <InterventoForm
         plants={plants} tipoOptions={tipoOptions} statoOptions={statoOptions} pianta={pianta}
+        tipoIniziale={tipoIniziale} targetIniziale={targetIniziale}
         dateLabel="Data dell'intervento" defaultData={todayISO()}
         submitLabel="Registra intervento"
         onSubmit={(payload) => { onSubmit(payload); onClose(); }}
@@ -231,7 +237,7 @@ export function PianificaModal({ onClose, onSave, plants, tipoOptions, statoOpti
             targetLabel = p ? p.nome : "Da specificare";
           }
           if (target === "tag") targetLabel = riferimento ? `Tag: ${riferimento}` : "Da specificare";
-          onSave({ targetLabel, targetType: target, tipo: tipoDef.label, data });
+          onSave({ targetLabel, targetType: target, riferimento, tipo: tipoDef.label, data });
           onClose();
         }}
       />
