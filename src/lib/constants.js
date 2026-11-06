@@ -15,10 +15,19 @@ export const FONT_DISPLAY = "'Shippori Mincho', serif";
 export const FONT_BODY = "'IBM Plex Sans', sans-serif";
 
 // Versione app, mostrata in Opzioni (spec §8).
-export const APP_VERSION = "0.12.1";
+export const APP_VERSION = "0.13.0";
 
 // Changelog visibile in app (spec §8). Più recente in cima.
 export const CHANGELOG = [
+  {
+    version: "0.13.0",
+    date: "2026-11-06",
+    items: [
+      "Nel visore a schermo intero si può ingrandire la foto: pinzata con due dita o doppio tocco",
+      "A foto ingrandita il trascinamento la sposta, e un pulsante la riporta a schermo",
+      "Su computer si ingrandisce con la rotellina del mouse",
+    ],
+  },
   {
     version: "0.12.1",
     date: "2026-11-06",

@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { useLiveQuery } from "dexie-react-hooks";
 import {
   Camera, Images, ImageIcon, Plus, X, ChevronLeft, ChevronRight, Trash2, Pencil,
-  CalendarDays, HelpCircle, Star,
+  CalendarDays, HelpCircle, Star, ZoomOut,
 } from "lucide-react";
 import { db } from "../lib/db.js";
 import {
@@ -309,18 +309,119 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify, copertinaId, on
     };
   }, [go, onClose]);
 
+  // --- Zoom -----------------------------------------------------------------
+  // Regola che tiene insieme i gesti: finché la foto è a grandezza naturale
+  // valgono gli swipe (cambia foto, trascina giù per chiudere). Appena è
+  // ingrandita quegli swipe tacciono e il trascinamento sposta l'immagine,
+  // altrimenti guardare un dettaglio in basso chiuderebbe il visore.
+  const SCALA_MAX = 4;
+  const [zoom, setZoom] = useState({ scala: 1, x: 0, y: 0 });
+  const imgRef = useRef(null);
+  const pizzico = useRef(null);   // stato della pinzata a due dita
+  const ultimoTap = useRef(0);
+  const ingrandita = zoom.scala > 1.01;
+
+  // Cambiando foto si torna a grandezza naturale: restare ingranditi su
+  // un'altra immagine disorienta.
+  useEffect(() => { setZoom({ scala: 1, x: 0, y: 0 }); }, [current?.id]);
+
+  // Limita lo spostamento ai bordi dell'immagine, così non si può trascinare
+  // la foto fuori dallo schermo e perderla di vista.
+  const limita = (scala, x, y) => {
+    const r = imgRef.current?.getBoundingClientRect();
+    const maxX = r ? Math.max(0, (r.width * (scala - 1)) / 2) : 0;
+    const maxY = r ? Math.max(0, (r.height * (scala - 1)) / 2) : 0;
+    return {
+      x: Math.min(maxX, Math.max(-maxX, x)),
+      y: Math.min(maxY, Math.max(-maxY, y)),
+    };
+  };
+
+  // `calcola` può essere un numero o una funzione della scala attuale.
+  // La forma a funzione non è un vezzo: gli eventi della rotellina (e della
+  // pinzata) arrivano a raffica, e leggendo la scala dallo stato del render
+  // venivano calcolati tutti sullo stesso valore vecchio — venti scatti di
+  // rotellina ne valevano uno solo.
+  const applicaScala = (calcola, posizione) => {
+    setZoom((prec) => {
+      const grezza = typeof calcola === "function" ? calcola(prec.scala) : calcola;
+      const scala = Math.min(SCALA_MAX, Math.max(1, grezza));
+      if (scala <= 1.01) return { scala: 1, x: 0, y: 0 };
+      const x = posizione ? posizione.x : prec.x;
+      const y = posizione ? posizione.y : prec.y;
+      return { scala, ...limita(scala, x, y) };
+    });
+  };
+
+  const distanzaFra = (a, b) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+
   const onTouchStart = (e) => {
+    if (e.touches.length === 2) {
+      pizzico.current = {
+        distanza: distanzaFra(e.touches[0], e.touches[1]),
+        scala: zoom.scala,
+      };
+      touch.current = { active: false };
+      return;
+    }
     const t = e.touches[0];
-    touch.current = { x: t.clientX, y: t.clientY, active: true };
+    touch.current = { x: t.clientX, y: t.clientY, active: true, partenza: { ...zoom } };
+  };
+
+  const onTouchMove = (e) => {
+    if (e.touches.length === 2 && pizzico.current) {
+      const fattore = distanzaFra(e.touches[0], e.touches[1]) / pizzico.current.distanza;
+      applicaScala(pizzico.current.scala * fattore);
+      return;
+    }
+    // Trascinamento a un dito: sposta solo se la foto è ingrandita.
+    if (ingrandita && touch.current.active) {
+      const t = e.touches[0];
+      const p = touch.current.partenza || zoom;
+      applicaScala((s) => s, {
+        x: p.x + (t.clientX - touch.current.x),
+        y: p.y + (t.clientY - touch.current.y),
+      });
+    }
   };
   const onTouchEnd = (e) => {
+    // Fine della pinzata: se si è tornati a grandezza naturale si azzera.
+    if (pizzico.current && e.touches.length < 2) {
+      pizzico.current = null;
+      if (zoom.scala <= 1.01) setZoom({ scala: 1, x: 0, y: 0 });
+      return;
+    }
     if (!touch.current.active) return;
     const t = e.changedTouches[0];
     const dx = t.clientX - touch.current.x;
     const dy = t.clientY - touch.current.y;
     touch.current.active = false;
+
+    // Doppio tocco: ingrandisce e rimpicciolisce, come in qualunque galleria.
+    const fermo = Math.abs(dx) < 10 && Math.abs(dy) < 10;
+    if (fermo) {
+      const adesso = Date.now();
+      if (adesso - ultimoTap.current < 300) {
+        ultimoTap.current = 0;
+        applicaScala(ingrandita ? 1 : 2.5);
+        return;
+      }
+      ultimoTap.current = adesso;
+      return;
+    }
+
+    // A foto ingrandita il trascinamento ha già spostato l'immagine: non deve
+    // anche cambiare foto o chiudere il visore.
+    if (ingrandita) return;
+
     if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) go(dx < 0 ? 1 : -1);
     else if (dy > 90 && Math.abs(dy) > Math.abs(dx)) onClose(); // swipe giù per chiudere
+  };
+
+  // Desktop: rotellina per ingrandire.
+  const onWheel = (e) => {
+    e.preventDefault();
+    applicaScala((s) => s * (e.deltaY < 0 ? 1.15 : 1 / 1.15));
   };
 
   const handleDelete = async () => {
@@ -344,6 +445,7 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify, copertinaId, on
       className="fixed inset-0 z-[999] flex flex-col"
       style={{ background: "rgba(12,11,10,.96)" }}
       onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
       {/* Barra superiore: contatore + chiudi */}
@@ -395,22 +497,46 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify, copertinaId, on
           impossibili da modificare. */}
       <div
         className="flex-1 flex items-center justify-center px-2 relative select-none"
-        style={{ minHeight: 0, overflow: "hidden" }}
+        style={{ minHeight: 0, overflow: "hidden", touchAction: "none" }}
+        onWheel={onWheel}
       >
-        {count > 1 && (
+        {/* Le frecce sparirebbero sotto la foto ingrandita e comunque a quel
+            punto il trascinamento serve a spostarla: si nascondono. */}
+        {count > 1 && !ingrandita && (
           <button onClick={() => go(-1)} style={{ ...btn, position: "absolute", left: 8 }} aria-label="Precedente">
             <ChevronLeft size={24} />
           </button>
         )}
         <img
+          ref={imgRef}
           src={urls[current.id]}
           alt={current.caption || "Foto pianta"}
-          style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+          style={{
+            maxWidth: "100%", maxHeight: "100%", objectFit: "contain",
+            transform: `translate(${zoom.x}px, ${zoom.y}px) scale(${zoom.scala})`,
+            transition: pizzico.current ? "none" : "transform .12s ease-out",
+            willChange: "transform",
+          }}
           draggable={false}
         />
-        {count > 1 && (
+        {count > 1 && !ingrandita && (
           <button onClick={() => go(1)} style={{ ...btn, position: "absolute", right: 8 }} aria-label="Successiva">
             <ChevronRight size={24} />
+          </button>
+        )}
+
+        {ingrandita && (
+          <button
+            onClick={() => applicaScala(1)}
+            className="absolute flex items-center gap-1.5 px-3"
+            style={{
+              bottom: 8, left: "50%", transform: "translateX(-50%)",
+              height: 32, borderRadius: 16, border: "none",
+              background: "rgba(0,0,0,.55)", color: PAPER,
+              fontFamily: FONT_BODY, fontSize: 11.5,
+            }}
+          >
+            <ZoomOut size={13} /> {zoom.scala.toFixed(1)}× — adatta
           </button>
         )}
       </div>
