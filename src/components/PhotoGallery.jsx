@@ -48,7 +48,7 @@ function useObjectUrls(photos) {
 // =============================================================================
 export function PhotoStrip({ plantId, copertinaId, onCopertina, onNotify }) {
   // Ordine cronologico inverso per data di SCATTO (takenAt), non di caricamento:
-  // prima le più recenti, si scorre indietro nel tempo.
+  // prima le piÃ¹ recenti, si scorre indietro nel tempo.
   const photos = useLiveQuery(
     () => db.photos.where("plantId").equals(plantId).toArray().then(sortPhotosNewestFirst),
     [plantId],
@@ -87,7 +87,7 @@ export function PhotoStrip({ plantId, copertinaId, onCopertina, onNotify }) {
     e.target.value = ""; // permette di ri-selezionare lo stesso file
   };
 
-  // Nota: sulla miniatura non c'è il cestino — si eliminava una foto per sbaglio
+  // Nota: sulla miniatura non c'Ã¨ il cestino â si eliminava una foto per sbaglio
   // troppo facilmente. L'eliminazione sta solo nel visore, con conferma.
 
   return (
@@ -126,7 +126,7 @@ export function PhotoStrip({ plantId, copertinaId, onCopertina, onNotify }) {
                 <span title="Data non presente nella foto: da confermare" style={{ opacity: 0.9 }}> ?</span>
               )}
             </span>
-            {/* Segno solo sulla copertina scelta a mano: quella automatica è
+            {/* Segno solo sulla copertina scelta a mano: quella automatica Ã¨
                 semplicemente la prima della striscia, non serve evidenziarla. */}
             {photo.id === copertinaId && (
               <span
@@ -147,7 +147,7 @@ export function PhotoStrip({ plantId, copertinaId, onCopertina, onNotify }) {
           style={{ width: 88, height: 88, border: `1px dashed ${BARK}`, borderRadius: 4, color: BARK, background: "transparent", opacity: busy ? 0.5 : 1 }}
         >
           {busy ? <ImageIcon size={18} /> : <Plus size={20} />}
-          <span style={{ fontFamily: FONT_BODY, fontSize: 10 }}>{busy ? "Salvo…" : "Aggiungi"}</span>
+          <span style={{ fontFamily: FONT_BODY, fontSize: 10 }}>{busy ? "Salvoâ¦" : "Aggiungi"}</span>
         </button>
 
         {/* input nascosti: fotocamera (capture) e galleria */}
@@ -178,8 +178,8 @@ export function PhotoStrip({ plantId, copertinaId, onCopertina, onNotify }) {
   );
 }
 
-// Action sheet: scelta sorgente foto (spec §7).
-// Il selettore di sistema ("Da galleria") espone già le foto del cloud
+// Action sheet: scelta sorgente foto (spec Â§7).
+// Il selettore di sistema ("Da galleria") espone giÃ  le foto del cloud
 // (Google Foto), quindi non serve un'integrazione dedicata.
 function SourceSheet({ onClose, onCamera, onGallery }) {
   const Row = ({ icon: Icon, label, hint, onClick, disabled }) => (
@@ -219,7 +219,7 @@ function SourceSheet({ onClose, onCamera, onGallery }) {
 }
 
 // =============================================================================
-//  Lightbox a schermo intero — swipe (touch), frecce (desktop), tastiera, elimina.
+//  Lightbox a schermo intero â swipe (touch), frecce (desktop), tastiera, elimina.
 //  Renderizzata in un portale su document.body per uscire dal contenitore 480px.
 // =============================================================================
 function Lightbox({ photos, urls, startIndex, onClose, onNotify, copertinaId, onCopertina }) {
@@ -249,15 +249,15 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify, copertinaId, on
   // seguiamo l'immagine per non ritrovarci su un'altra foto.
   const saveDay = async () => {
     if (!current || !day || day === toInputDay(photoDate(current))) return;
-    // Il segnalibro va messo PRIMA della scrittura: l'elenco può aggiornarsi
+    // Il segnalibro va messo PRIMA della scrittura: l'elenco puÃ² aggiornarsi
     // subito dopo il commit, anche prima che la update() ritorni.
     keepFollowingId.current = current.id;
     try {
       await updatePhotoDate(current.id, day);
       onNotify?.("Data aggiornata");
     } catch (e) {
-      // Un salvataggio fallito in silenzio è peggio di un errore: chi prova a
-      // correggere la data non capirebbe perché non cambia nulla.
+      // Un salvataggio fallito in silenzio Ã¨ peggio di un errore: chi prova a
+      // correggere la data non capirebbe perchÃ© non cambia nulla.
       console.error(e);
       keepFollowingId.current = null;
       setDay(toInputDay(photoDate(current)));
@@ -310,8 +310,8 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify, copertinaId, on
   }, [go, onClose]);
 
   // --- Zoom -----------------------------------------------------------------
-  // Regola che tiene insieme i gesti: finché la foto è a grandezza naturale
-  // valgono gli swipe (cambia foto, trascina giù per chiudere). Appena è
+  // Regola che tiene insieme i gesti: finchÃ© la foto Ã¨ a grandezza naturale
+  // valgono gli swipe (cambia foto, trascina giÃ¹ per chiudere). Appena Ã¨
   // ingrandita quegli swipe tacciono e il trascinamento sposta l'immagine,
   // altrimenti guardare un dettaglio in basso chiuderebbe il visore.
   const SCALA_MAX = 4;
@@ -325,7 +325,7 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify, copertinaId, on
   // un'altra immagine disorienta.
   useEffect(() => { setZoom({ scala: 1, x: 0, y: 0 }); }, [current?.id]);
 
-  // Limita lo spostamento ai bordi dell'immagine, così non si può trascinare
+  // Limita lo spostamento ai bordi dell'immagine, cosÃ¬ non si puÃ² trascinare
   // la foto fuori dallo schermo e perderla di vista.
   const limita = (scala, x, y) => {
     const r = imgRef.current?.getBoundingClientRect();
@@ -337,10 +337,10 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify, copertinaId, on
     };
   };
 
-  // `calcola` può essere un numero o una funzione della scala attuale.
-  // La forma a funzione non è un vezzo: gli eventi della rotellina (e della
+  // `calcola` puÃ² essere un numero o una funzione della scala attuale.
+  // La forma a funzione non Ã¨ un vezzo: gli eventi della rotellina (e della
   // pinzata) arrivano a raffica, e leggendo la scala dallo stato del render
-  // venivano calcolati tutti sullo stesso valore vecchio — venti scatti di
+  // venivano calcolati tutti sullo stesso valore vecchio â venti scatti di
   // rotellina ne valevano uno solo.
   const applicaScala = (calcola, posizione) => {
     setZoom((prec) => {
@@ -374,7 +374,7 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify, copertinaId, on
       applicaScala(pizzico.current.scala * fattore);
       return;
     }
-    // Trascinamento a un dito: sposta solo se la foto è ingrandita.
+    // Trascinamento a un dito: sposta solo se la foto Ã¨ ingrandita.
     if (ingrandita && touch.current.active) {
       const t = e.touches[0];
       const p = touch.current.partenza || zoom;
@@ -385,7 +385,7 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify, copertinaId, on
     }
   };
   const onTouchEnd = (e) => {
-    // Fine della pinzata: se si è tornati a grandezza naturale si azzera.
+    // Fine della pinzata: se si Ã¨ tornati a grandezza naturale si azzera.
     if (pizzico.current && e.touches.length < 2) {
       pizzico.current = null;
       if (zoom.scala <= 1.01) setZoom({ scala: 1, x: 0, y: 0 });
@@ -410,12 +410,12 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify, copertinaId, on
       return;
     }
 
-    // A foto ingrandita il trascinamento ha già spostato l'immagine: non deve
+    // A foto ingrandita il trascinamento ha giÃ  spostato l'immagine: non deve
     // anche cambiare foto o chiudere il visore.
     if (ingrandita) return;
 
     if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) go(dx < 0 ? 1 : -1);
-    else if (dy > 90 && Math.abs(dy) > Math.abs(dx)) onClose(); // swipe giù per chiudere
+    else if (dy > 90 && Math.abs(dy) > Math.abs(dx)) onClose(); // swipe giÃ¹ per chiudere
   };
 
   // Desktop: rotellina per ingrandire.
@@ -429,7 +429,7 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify, copertinaId, on
     await deletePhoto(id);
     onNotify?.("Foto eliminata");
     setConfirmDel(false);
-    // l'effetto su [count] richiuderà o riposizionerà automaticamente
+    // l'effetto su [count] richiuderÃ  o riposizionerÃ  automaticamente
   };
 
   if (!current) return null;
@@ -457,14 +457,14 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify, copertinaId, on
           {index + 1} / {count}
         </span>
         <div className="flex items-center gap-2">
-          {/* Copertina: tocco = diventa la copertina della scheda; se lo è già
-              per scelta, tocco = torna automatica (la più recente). */}
+          {/* Copertina: tocco = diventa la copertina della scheda; se lo Ã¨ giÃ 
+              per scelta, tocco = torna automatica (la piÃ¹ recente). */}
           {onCopertina && (
             <button
               onClick={() => {
                 if (current.id === copertinaId) {
                   onCopertina(null);
-                  onNotify?.("Copertina di nuovo automatica: la foto più recente");
+                  onNotify?.("Copertina di nuovo automatica: la foto piÃ¹ recente");
                 } else {
                   onCopertina(current.id);
                   onNotify?.("Impostata come copertina");
@@ -490,10 +490,10 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify, copertinaId, on
       </div>
 
       {/* Immagine.
-          `minHeight: 0` non è un dettaglio: senza, questo riquadro elastico si
+          `minHeight: 0` non Ã¨ un dettaglio: senza, questo riquadro elastico si
           rifiuta di scendere sotto la dimensione naturale della foto, e con
           un'immagine molto alta cresce oltre lo schermo spingendo FUORI la barra
-          inferiore — didascalia e data sparivano sotto il bordo e sembravano
+          inferiore â didascalia e data sparivano sotto il bordo e sembravano
           impossibili da modificare. */}
       <div
         className="flex-1 flex items-center justify-center px-2 relative select-none"
@@ -501,9 +501,14 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify, copertinaId, on
         onWheel={onWheel}
       >
         {/* Le frecce sparirebbero sotto la foto ingrandita e comunque a quel
-            punto il trascinamento serve a spostarla: si nascondono. */}
+            punto il trascinamento serve a spostarla: si nascondono.
+            zIndex: la foto porta una `transform` (serve allo zoom) e questo le
+            crea un contesto di impilamento proprio. Senza un indice esplicito
+            veniva disegnata SOPRA gli elementi che la precedono nel markup, e
+            su una foto orizzontale — larga quanto lo schermo — la freccia di
+            sinistra ci spariva sotto. */}
         {count > 1 && !ingrandita && (
-          <button onClick={() => go(-1)} style={{ ...btn, position: "absolute", left: 8 }} aria-label="Precedente">
+          <button onClick={() => go(-1)} style={{ ...btn, position: "absolute", left: 8, zIndex: 2 }} aria-label="Precedente">
             <ChevronLeft size={24} />
           </button>
         )}
@@ -520,7 +525,7 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify, copertinaId, on
           draggable={false}
         />
         {count > 1 && !ingrandita && (
-          <button onClick={() => go(1)} style={{ ...btn, position: "absolute", right: 8 }} aria-label="Successiva">
+          <button onClick={() => go(1)} style={{ ...btn, position: "absolute", right: 8, zIndex: 2 }} aria-label="Successiva">
             <ChevronRight size={24} />
           </button>
         )}
@@ -530,20 +535,20 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify, copertinaId, on
             onClick={() => applicaScala(1)}
             className="absolute flex items-center gap-1.5 px-3"
             style={{
-              bottom: 8, left: "50%", transform: "translateX(-50%)",
+              bottom: 8, left: "50%", transform: "translateX(-50%)", zIndex: 2,
               height: 32, borderRadius: 16, border: "none",
               background: "rgba(0,0,0,.55)", color: PAPER,
               fontFamily: FONT_BODY, fontSize: 11.5,
             }}
           >
-            <ZoomOut size={13} /> {zoom.scala.toFixed(1)}× — adatta
+            <ZoomOut size={13} /> {zoom.scala.toFixed(1)}Ã â adatta
           </button>
         )}
       </div>
 
       {/* Barra inferiore: didascalia editabile + data + elimina.
-          flexShrink 0: questa deve restare intera e visibile, è la parte con cui
-          si interagisce. A restringersi è la foto. */}
+          flexShrink 0: questa deve restare intera e visibile, Ã¨ la parte con cui
+          si interagisce. A restringersi Ã¨ la foto. */}
       <div
         className="px-4 py-3"
         style={{ flexShrink: 0, paddingBottom: "calc(env(safe-area-inset-bottom) + 14px)" }}
@@ -559,7 +564,7 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify, copertinaId, on
             onChange={(e) => setCaption(e.target.value)}
             onBlur={saveCaption}
             onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
-            placeholder="Aggiungi una didascalia…"
+            placeholder="Aggiungi una didascaliaâ¦"
             maxLength={140}
             className="flex-1 min-w-0"
             style={{ background: "transparent", border: "none", outline: "none", color: PAPER, fontFamily: FONT_BODY, fontSize: 13.5 }}
@@ -575,14 +580,14 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify, copertinaId, on
           >
             <HelpCircle size={14} color={PAPER} style={{ opacity: 0.7, flexShrink: 0 }} />
             <span className="flex-1 min-w-0" style={{ fontFamily: FONT_BODY, fontSize: 11.5, color: PAPER, opacity: 0.85 }}>
-              Questa foto non conteneva la data: quella qui sotto è solo una stima.
+              Questa foto non conteneva la data: quella qui sotto Ã¨ solo una stima.
             </span>
             <button
               onClick={async () => { await confermaPhotoDate(current.id); onNotify?.("Data confermata"); }}
               className="flex-shrink-0 px-2.5 py-1"
               style={{ background: "transparent", border: `1px solid ${PAPER}66`, borderRadius: 5, color: PAPER, fontFamily: FONT_BODY, fontSize: 11 }}
             >
-              È giusta
+              Ã giusta
             </button>
           </div>
         )}
@@ -592,12 +597,12 @@ function Lightbox({ photos, urls, startIndex, onClose, onNotify, copertinaId, on
           <label
             className="flex items-center gap-2 px-3 py-2 flex-shrink-0"
             style={{ background: "rgba(255,255,255,.08)", borderRadius: 8, cursor: "pointer" }}
-            title="Data della foto — determina l'ordine cronologico"
+            title="Data della foto â determina l'ordine cronologico"
           >
             <CalendarDays size={14} color={PAPER} style={{ opacity: day ? 0.6 : 1 }} />
             {!day && (
               <span style={{ fontFamily: FONT_BODY, fontSize: 11, color: PAPER, opacity: 0.75 }}>
-                senza data —
+                senza data â
               </span>
             )}
             <input
